@@ -6,7 +6,7 @@ public class Raycaster : MonoBehaviour
 {
 
     public static Raycaster Instance { get; private set; }
-
+    public static bool Locked { get; private set; } = false;
 
     private void Awake()
     {
@@ -59,4 +59,13 @@ public class Raycaster : MonoBehaviour
 
     }
 
+    public static void Lock()
+    {
+        Locked = true;
+    }
+
+    public static void Unlock()
+    {
+        Locked = false;
+    }
 }

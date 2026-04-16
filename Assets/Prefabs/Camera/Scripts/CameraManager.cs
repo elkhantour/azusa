@@ -7,6 +7,12 @@ public enum CameraState
     MOVE
 }
 
+public enum CameraMode
+{
+    Editor,
+    FollowPlayer,
+}
+
 public class CameraManager : MonoBehaviour
 {
 
@@ -14,7 +20,8 @@ public class CameraManager : MonoBehaviour
 
     public static CameraManager Instance
     {
-        get {
+        get
+        {
             return _instance;
         }
     }
@@ -118,11 +125,11 @@ public class CameraManager : MonoBehaviour
     private void Orbit()
     {
         //means damping is over and no click down
-        if(lastAngle == transform.rotation.y && state == CameraState.REST)
+        if (lastAngle == transform.rotation.y && state == CameraState.REST)
         {
             mouseX = 0.0f;
 
-            if(xSmooth > -0.001 && xSmooth < 0.001)
+            if (xSmooth > -0.001 && xSmooth < 0.001)
             {
                 //only release previous targeted hitpoint when damping is actually close to none (0)
                 lastHitPoint = Vector3.zero;
@@ -130,7 +137,8 @@ public class CameraManager : MonoBehaviour
             }
         }
 
-        if(state == CameraState.ROTATE) {
+        if (state == CameraState.ROTATE)
+        {
             // Cast a ray from the camera to the floor
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
@@ -180,6 +188,6 @@ public class CameraManager : MonoBehaviour
         }
 
         return Mathf.Clamp(angle, min, max);
-        
-    } 
+
+    }
 }

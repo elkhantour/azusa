@@ -18,56 +18,66 @@ public class Draggable : MonoBehaviour
 
     private void Update()
     {
+
+        //Define Target
         GameObject hit = Raycaster.GetHitObject();
         if (hit
             && (HitNameFilter != null && hit.name == HitNameFilter)
+            && Raycaster.Locked == false
            )
         {
             Target = hit;
+        }
+
+
+        //Define Events
+        if (Target)
+        {
+
+            /*if (Hovered)
+            {
+                OnOut();
+            }
             if (!Hovered)
             {
                 OnHover();
-                Hovered = true;
-            }
+            }*/
 
-            if (Input.GetMouseButtonDown(0)) {
-                Hooked = true;
-                Offset = Target.transform.parent.position - Raycaster.MouseWorldPosition();
-            }
-            if (Input.GetMouseButtonUp(0)) {
-                Hooked = false;
-            }
-
-            if (Hooked) {
-                OnMove();
-             }
-            
-        }
-        else
-        {
-            if (Hovered)
+            if (Parent(Target).GetInstanceID() == gameObject.transform.GetInstanceID() && Input.GetMouseButtonDown(0))
             {
-                Hovered = false;
-                OnOut();
+                Debug.Log(Parent(Target).GetInstanceID() == gameObject.transform.GetInstanceID());
+                Offset = Target.transform.parent.position - Raycaster.MouseWorldPosition();
+                OnMove();
+                Raycaster.Lock();
             }
         }
+
+        //Global Unlock/ Reset on mouse up
+        if (Input.GetMouseButtonUp(0))
+        {
+            Target = null;
+            Raycaster.Unlock();
+        }
+    }
+
+    private Transform Parent(GameObject target)
+    {
+        return target.transform.parent;
     }
 
     public void OnMove()
     {
-        if(Target == null) { return;  }
+        Debug.Log("move");
         Target.transform.parent.position = Raycaster.MouseWorldPosition() + Offset;
     }
 
 
     public void OnHover()
     {
-        if (Target == null) { return; }
     }
 
     public void OnOut()
     {
-        if (Target == null) { return; }
     }
 
 }
