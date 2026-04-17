@@ -84,7 +84,7 @@ public class GridTile : GridMaster
     private void OnMouseEnter()
     {
 
-        if(CameraManager.state == CameraState.ROTATE || active == false)
+        if(CameraManager.Instance.GetState() == CameraState.ROTATE || active == false)
         {
             return;
         }
