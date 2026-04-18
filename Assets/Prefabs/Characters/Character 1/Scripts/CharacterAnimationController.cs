@@ -7,6 +7,7 @@ public class CharacterAnimationController : MonoBehaviour
     [Header("Movement")]
     public float walkSpeedThreshold = 0.1f;
     public float runSpeedThreshold = 3f;
+    public float rotationSpeed = 10f; // How fast the character turns
 
     private void Start()
     {
@@ -24,30 +25,42 @@ public class CharacterAnimationController : MonoBehaviour
         float vertical = Input.GetAxis("Vertical");
         float horizontal = Input.GetAxis("Horizontal");
 
-        // Calculate base input magnitude (0 to 1)
-        float speed = new Vector2(horizontal, vertical).magnitude;
+        // 1. Calculate the direction vector relative to the world
+        Vector3 moveDirection = new Vector3(horizontal, 0, vertical).normalized;
 
-        // If holding Shift, boost the speed value sent to the Animator
+        // 2. Rotate the character if there is movement input
+        if (moveDirection.magnitude >= 0.1f)
+        {
+            // Calculate the target rotation
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            
+            // Smoothly rotate toward that target
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+
+        // 3. Handle Animator Speed
+        float speed = new Vector2(horizontal, vertical).magnitude;
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            speed *= 5f; // This pushes 'speed' above your runSpeedThreshold (3)
+            speed *= 5f;
         }
 
         animator.SetFloat("Speed", speed);
     }
-    
+
     private void HandleActions()
     {
-        // Jump
+        // Jump Logic (Optimized)
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            animator.SetTrigger("Jump");
-        }
-
-        // Running Jump (Shift + Space)
-        if (Input.GetKeyDown(KeyCode.Space) && Input.GetKey(KeyCode.LeftShift))
-        {
-            animator.SetTrigger("RunningJump");
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                animator.SetTrigger("RunningJump");
+            }
+            else
+            {
+                animator.SetTrigger("Jump");
+            }
         }
 
         // Sit toggle
