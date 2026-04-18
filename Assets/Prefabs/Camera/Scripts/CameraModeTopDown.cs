@@ -7,6 +7,11 @@ public class CameraModeTopDown : CameraMode
 
     [Header("Position")]
     [SerializeField] private float height = 15f;
+
+    // Position influenced by look-at (relative to target)
+    [SerializeField] private Vector3 position = new Vector3(0f, 0f, -10f);
+
+    // Pure world-space offset (not influenced by rotation)
     [SerializeField] private Vector3 offset = Vector3.zero;
 
     [Header("Zoom")]
@@ -27,9 +32,17 @@ public class CameraModeTopDown : CameraMode
 
         HandleZoom();
 
-        Vector3 desiredPosition = target.position 
-                                + Vector3.up * height 
-                                + offset;
+        // Always look at target first
+        transform.LookAt(target);
+
+        // Position relative to look direction
+        Vector3 relativePosition = transform.rotation * position;
+
+        Vector3 desiredPosition = 
+            target.position +
+            Vector3.up * height +
+            relativePosition +
+            offset;
 
         transform.position = Vector3.Lerp(
             transform.position,
@@ -37,7 +50,8 @@ public class CameraModeTopDown : CameraMode
             smoothSpeed * Time.deltaTime
         );
 
-        transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        // Ensure we always look at target after moving
+        transform.LookAt(target);
     }
 
     private void HandleZoom()
