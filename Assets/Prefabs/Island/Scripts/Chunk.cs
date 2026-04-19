@@ -1,14 +1,11 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using Utils;
-using System.Linq;
 
-/*
+/**
  Chunks are the independant component of an island.
  A chunk basically stacks up many Circles. Chunks turns the 2D basic circles into a SOLO independant island.
  */
-
 namespace Island
 {
 
@@ -20,7 +17,7 @@ namespace Island
         public float radius = 1f;
 
         //Chunk depth
-        public float Depth = 3;
+        public float depth = 3;
         public List<Vector3> vertices = new List<Vector3>();
         public List<Circle> Circles { get; private set; } = new List<Circle>();
         public List<BridgeLoop> BridgeLoops { get; private set; } = new List<BridgeLoop>();
@@ -34,6 +31,8 @@ namespace Island
                 CombineInstance[] combine = new CombineInstance[4];
                 Mesh finalMesh = new Mesh();
 
+		depth *= radius;
+		
                 List<Circle> circleConfig = new List<Circle>()
                 {
                     //1. Set Ground
@@ -52,7 +51,7 @@ namespace Island
                         name= "belt",
                         segments = (int) Mathf.Ceil(segments / 2),
                         radius = radius / 1.2f,
-                        position = new Vector3(0, -1 * Depth, 0),
+                        position = new Vector3(0, -1 * depth, 0),
                         Smooth = false
                     },
 
@@ -62,7 +61,7 @@ namespace Island
                         name = "root",
                         segments = (int)Mathf.Ceil(segments / 3),
                         radius = radius / 2.5f,
-                        position = new Vector3(0, -2 * Depth, 0),
+                        position = new Vector3(0, -2 * depth, 0),
                     }
                 };
 

@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/**
+ * Handles the business logic for the player animation state.
+ * THe key and movement part is handled by CharacterMovement
+ */
 public class CharacterAnimationController : MonoBehaviour
 {
     private Animator animator;
