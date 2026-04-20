@@ -41,7 +41,7 @@ namespace Island
         public GameObject Parent;
 
         // The margin between the area edges and the actuall flora
-        public float DistanceFromEdge = 1.0f;
+        public int DistanceFromEdge = 1;
         // TODO: explain usage
         public int AreaVertices = 30;
         // Enable debug draw boundboxes
