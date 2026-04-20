@@ -34,6 +34,7 @@ public class CharacterAnimationController : MonoBehaviour
             animator.SetTrigger("Jump");
     }
 
+    
     private void ToggleSit()
     {
         bool isSitting = !animator.GetBool("IsSitting");
