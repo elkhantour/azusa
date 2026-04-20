@@ -83,6 +83,7 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _AmbientIntensity: 1
     - _Angle: -56
     - _ArcIntensity: 5.4
     - _BUILTIN_QueueControl: 0

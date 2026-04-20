@@ -83,6 +83,7 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _AmbientIntensity: 1
     - _Angle: -56
     - _ArcIntensity: 7.9
     - _BUILTIN_QueueControl: 0
@@ -125,6 +126,9 @@ Material:
     - _ZWrite: 1
     - _ZenithBlend: 0.3
     m_Colors:
+    - _AmbientEquator: {r: 0, g: 0, b: 0, a: 0}
+    - _AmbientGround: {r: 0, g: 0, b: 0, a: 0}
+    - _AmbientSky: {r: 0, g: 0, b: 0, a: 0}
     - _ArcColor: {r: 0.9254902, g: 0.51991886, b: 0.25882357, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
