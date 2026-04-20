@@ -42,7 +42,7 @@ namespace Island
 
         // The margin between the area edges and the actuall flora
         public float DistanceFromEdge = 1.0f;
-        // TODO ??
+        // TODO: explain usage
         public int AreaVertices = 30;
         // Enable debug draw boundboxes
         public bool DebugMode = false;
@@ -66,8 +66,10 @@ namespace Island
         public FloraElement[] Generate(FloraType type = FloraType.Chaos)
         {
 
+            // Generate random points (aka spread points)
             SpreadPoints spread = new SpreadPoints(_area, Fertility);
-            List<Vector3> points = spread.Points.ToList();
+            List<Vector3> points = spread.GeneratePoints().ToList();
+
             List<int> availableIndex = Enumerable.Range(0, points.Count - 1).ToList();
             List<FloraElement> enumItems = Elements.ToList();
 
@@ -97,10 +99,8 @@ namespace Island
                     GameObject instance = GameObject.Instantiate(item.Mesh, position, rotation);
 
                     // Randomize the Size
-                    float minScale = 0.8f;
-                    float maxScale = 1.2f;
-                    float randomScale = UnityEngine.Random.Range(minScale, maxScale);
-                    instance.transform.localScale = Vector3.one * randomScale;
+                    float randomScale = UnityEngine.Random.Range(item.MinSize, item.MaxSize);
+                    instance.transform.localScale = Vector3.one * item.BaseSize * randomScale;
 
                     if (Parent != null) instance.transform.SetParent(Parent.transform);
                 }
@@ -140,15 +140,19 @@ namespace Island
         private Mesh ShrinkArea(float value)
         {
 
+            // TODO Debug why triangulator doesn't output the right mesh
             //Downsample and simplify shape
-            Mesh shrinkMesh = MeshUtils.DownSample(_area, AreaVertices);
+            //Mesh shrinkMesh = MeshUtils.DownSample(_area, AreaVertices);
+            Mesh shrinkMesh = _area;
             shrinkMesh = MeshUtils.Shrink(shrinkMesh, value);
 
+            return shrinkMesh;
             //Lost triangulation while downsampling
-            Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(shrinkMesh.vertices));
-
-            return triangulator.Mesh;
+            //Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(shrinkMesh.vertices));
+            //return triangulator.Mesh;
         }
+
+
     }
 
 }

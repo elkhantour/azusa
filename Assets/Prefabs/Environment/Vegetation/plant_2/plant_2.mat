@@ -7,28 +7,31 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Skybox
-  m_Shader: {fileID: -6465566751694194690, guid: 0731dda1116d847e1bd253c5eedf0417, type: 3}
+  m_Name: plant_2
+  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _METALLICSPECGLOSSMAP
+  - _NORMALMAP
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Opaque
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 46b95d80b392449f29b4197c986869d1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 3c02b222839114858a1d50f211e92510, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -48,11 +51,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 46b95d80b392449f29b4197c986869d1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 233c3ab998e2d4b59a7a9abd475cbf4b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -83,10 +86,6 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _Angle: -56
-    - _ArcIntensity: 5.4
-    - _BUILTIN_QueueControl: 0
-    - _BUILTIN_QueueOffset: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -102,14 +101,9 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HorizonBlend: 7
     - _Metallic: 0
-    - _NebualSpeed: 0.13
-    - _NebulaIntensity: 0.8
     - _OcclusionStrength: 1
     - _Parallax: 0.005
-    - _PosterizeSteps: 12
-    - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
@@ -117,47 +111,16 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _StarsIntensity: 0.95
     - _Surface: 0
-    - _SwarmIntensity: 0.06
-    - _WaveSpeed: 0.61
     - _WorkflowMode: 1
     - _ZWrite: 1
-    - _ZenithBlend: 0.3
     m_Colors:
-    - _AmbientEquator: {r: 0.3098039, g: 0.0470588, b: 0.2313725, a: 1}
-    - _AmbientGround: {r: 0.462745, g: 0.4823529, b: 0, a: 1}
-    - _AmbientSky: {r: 0.2039215, g: 0.46666652, b: 1, a: 1}
-    - _ArcColor: {r: 0.9254902, g: 0.83080536, b: 0.25882357, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _GroundColor: {r: 0.40557134, g: 0.5690067, b: 0.9245283, a: 0}
-    - _GroundColorBottom: {r: 0.38020647, g: 0.6383498, b: 0.9056604, a: 0}
-    - _HorizonColor: {r: 0.4627451, g: 0.72274804, b: 0.7254902, a: 0}
-    - _NebualColor: {r: 0.8509804, g: 0.55152446, b: 0.18039213, a: 0}
-    - _SkyColor: {r: 0.33490568, g: 0.7041111, b: 1, a: 0}
-    - _SkyColorTop: {r: 0.50356, g: 0.86063725, b: 0.8679245, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SwarmColor: {r: 0.5019608, g: 0.48481542, b: 0.06666667, a: 0}
-    - _WaveColor: {r: 0.28537735, g: 0.3869386, b: 0.5, a: 0}
-    - _ZenithColor: {r: 0.40650588, g: 0.6529887, b: 0.990566, a: 0}
-    - _ZenithColorTop: {r: 0.5882353, g: 0.9222846, b: 0.98039216, a: 0}
   m_BuildTextureStacks: []
---- !u!114 &4085701150399961642
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 639247ca83abc874e893eb93af2b5e44, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  version: 0
---- !u!114 &7636839428207393378
+--- !u!114 &8806857916067140436
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

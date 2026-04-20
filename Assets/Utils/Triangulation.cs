@@ -10,12 +10,13 @@ using Utils;
 namespace Triangulation
 {
 
-    public class Triangulator {
+    public class Triangulator
+    {
 
         private enum CleanTriangleMethod
         {
-            RAYCAST,
-            HULL
+            Raycast,
+            Hull
         };
 
 
@@ -28,7 +29,8 @@ namespace Triangulation
 
         private Vector2[] OuterEdges { get; set; }
 
-        public Triangulator(Vector2[] initPoints, Vector2[] outerEdges = null) {
+        public Triangulator(Vector2[] initPoints, Vector2[] outerEdges = null)
+        {
 
             OuterEdges = outerEdges == null ? initPoints : outerEdges;
 
@@ -39,7 +41,7 @@ namespace Triangulation
 
             Mesh = new Mesh();
             Mesh.vertices = GenerateVertices();
-            Mesh.triangles = GenerateTriangles(CleanTriangleMethod.RAYCAST);
+            Mesh.triangles = GenerateTriangles(CleanTriangleMethod.Raycast);
 
             Vertices = Mesh.vertices;
             Triangles = Mesh.triangles;
@@ -78,7 +80,7 @@ namespace Triangulation
 
         private int[] GenerateTriangles(CleanTriangleMethod method)
         {
-            return method == CleanTriangleMethod.RAYCAST ? CleanTrianglesRaycast(Delaunator.GetTriangles()) : CleanTrianglesHull(Delaunator.GetTriangles());
+            return method == CleanTriangleMethod.Raycast ? CleanTrianglesRaycast(Delaunator.GetTriangles()) : CleanTrianglesHull(Delaunator.GetTriangles());
         }
 
         private int[] CleanTrianglesRaycast(IEnumerable<ITriangle> triangles)
@@ -92,6 +94,7 @@ namespace Triangulation
                 //Get centroid Point coordinate of triangle
                 IPoint centroid = Delaunator.GetCentroid(tri.Index);
 
+
                 //Go through each points of our initial shape and check the intersection number via raycasting vector
                 int nIntersection = 0;
                 for (int pt = 0; pt < OuterEdges.Length; pt++)
@@ -102,8 +105,13 @@ namespace Triangulation
                     Vector2 nextPoint = OuterEdges[(pt + 1) % OuterEdges.Length];
 
                     //Convert vector to point
-                    DelaunatorSharp.Point sideStart = new() { X = currentPoint.x, Y = currentPoint.y };
-                    DelaunatorSharp.Point sideEnd = new() { X = nextPoint.x, Y = nextPoint.y };
+                    DelaunatorSharp.Point sideStart = new DelaunatorSharp.Point();
+                    sideStart.X = currentPoint.x;
+                    sideStart.Y = currentPoint.y;
+
+                    DelaunatorSharp.Point sideEnd = new DelaunatorSharp.Point();
+                    sideEnd.X = nextPoint.x;
+                    sideEnd.Y = nextPoint.y;
 
                     //Check if centroid is in or out via raycasting
                     if (IsIntersecting(centroid, sideStart, sideEnd)) nIntersection++;
@@ -113,7 +121,8 @@ namespace Triangulation
                 {
 
                     //Inside, append triangle indexes
-                    foreach (int index in Delaunator.PointsOfTriangle(tri.Index)) {
+                    foreach (int index in Delaunator.PointsOfTriangle(tri.Index))
+                    {
                         cleanTri.Add(index);
                     }
 
@@ -130,7 +139,7 @@ namespace Triangulation
 
             foreach (ITriangle tri in triangles)
             {
-                if(BelongToHull(tri.Points, Delaunator.GetHullPoints()) == false)
+                if (BelongToHull(tri.Points, Delaunator.GetHullPoints()) == false)
                 {
                     //Inside, append triangle indexes
                     foreach (int index in Delaunator.PointsOfTriangle(tri.Index))
@@ -155,11 +164,11 @@ namespace Triangulation
 
             foreach (IPoint point in points)
             {
-                for(int i = 0; i < hull.Length; i++)
+                for (int i = 0; i < hull.Length; i++)
                 {
                     IPoint currentHullPoint = hull[i];
 
-                    if( point.X == currentHullPoint.X && point.Y == currentHullPoint.Y)
+                    if (point.X == currentHullPoint.X && point.Y == currentHullPoint.Y)
                     {
                         commonPoints++;
                     }
@@ -175,16 +184,16 @@ namespace Triangulation
         {
 
             //Ray
-            float v1x1 = (float) point.X;
-            float v1y1 = (float) point.Y;
+            float v1x1 = (float)point.X;
+            float v1y1 = (float)point.Y;
             float v1x2 = 0.0f;
             float v1y2 = 100.0f;
 
             //Side
-            float v2x1 = (float) sideStart.X;
-            float v2y1 = (float) sideStart.Y;
-            float v2x2 = (float) sideEnd.X;
-            float v2y2 = (float) sideEnd.Y;
+            float v2x1 = (float)sideStart.X;
+            float v2y1 = (float)sideStart.Y;
+            float v2x2 = (float)sideEnd.X;
+            float v2y2 = (float)sideEnd.Y;
 
             float d1, d2;
             float a1, a2, b1, b2, c1, c2;

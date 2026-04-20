@@ -125,6 +125,9 @@ Material:
     - _ZWrite: 1
     - _ZenithBlend: 0.3
     m_Colors:
+    - _AmbientEquator: {r: 0.30980387, g: 0.047058783, b: 0.23137248, a: 1}
+    - _AmbientGround: {r: 0.462745, g: 0.4823529, b: 0, a: 1}
+    - _AmbientSky: {r: 0.20392147, g: 0.46666646, b: 1, a: 1}
     - _ArcColor: {r: 0.9254902, g: 0.83080536, b: 0.25882357, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}

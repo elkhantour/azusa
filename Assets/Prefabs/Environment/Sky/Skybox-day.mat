@@ -45,6 +45,7 @@ Material:
     - _SwarmIntensity: 0
     - _ZenithBlend: 0.2
     m_Colors:
+    - _AmbientSky: {r: 0.2039215, g: 0.46666652, b: 1, a: 1}
     - _ArcColor: {r: 0.9254902, g: 0.70312226, b: 0.25882357, a: 1}
     - _GroundColor: {r: 0.32039872, g: 0.62959373, b: 0.9056604, a: 0}
     - _GroundColorBottom: {r: 0.36142755, g: 0.5016092, b: 0.5849056, a: 0}

@@ -39,7 +39,12 @@ namespace Island
             Draggable draggable = gameObject.GetComponent<Draggable>();
             draggable.HitNameFilter = CHUNK_COLLIDER_NAME;
             //Add Materials
-            //gameObject.GetComponent<MeshRenderer>().materials = new Material[] { GroundMaterial, RockMaterial, RockMaterial, RockMaterial };
+            gameObject.GetComponent<MeshRenderer>().materials = new Material[] {
+        _biome.GroundMaterial,
+        _biome.RockMaterial,
+        _biome.RockMaterial,
+        _biome.RockMaterial
+        };
 
             Mesh = UpdateMesh();
             UpdateBounds();

@@ -53,6 +53,18 @@
         },
         {
             "m_Id": "f76c1a620b154bdd88322acc170c5170"
+        },
+        {
+            "m_Id": "a5987de87fd94f41bc8673b6d624ece4"
+        },
+        {
+            "m_Id": "afe152a0ae424072819064e5231fb4d5"
+        },
+        {
+            "m_Id": "e94207160c614cd994a326a2cc39aa9d"
+        },
+        {
+            "m_Id": "694bad8468a647cb92aa75a545eadf25"
         }
     ],
     "m_Keywords": [],
@@ -81,6 +93,9 @@
         },
         {
             "m_Id": "422c009a34ba4ddba6e50684b4ebac39"
+        },
+        {
+            "m_Id": "f5139e89ca1749b8aaad8c0bac72e0b3"
         }
     ],
     "m_Nodes": [
@@ -6370,6 +6385,34 @@
 }
 
 {
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "694bad8468a647cb92aa75a545eadf25",
+    "m_Guid": {
+        "m_GuidSerialized": "540b912c-891c-4800-b5db-db164ad57cc9"
+    },
+    "m_Name": "AmbientIntensity",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "AmbientIntensity",
+    "m_DefaultReferenceName": "_AmbientIntensity",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 0,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    }
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
     "m_ObjectId": "6953558173ac4811ac599da94a1e6a78",
@@ -8809,6 +8852,36 @@
 }
 
 {
+    "m_SGVersion": 3,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.ColorShaderProperty",
+    "m_ObjectId": "a5987de87fd94f41bc8673b6d624ece4",
+    "m_Guid": {
+        "m_GuidSerialized": "c3b3b9c1-0fce-43cc-865d-04b53e85ad01"
+    },
+    "m_Name": "AmbientSky",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "AmbientSky",
+    "m_DefaultReferenceName": "_AmbientSky",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "isMainColor": false,
+    "m_ColorMode": 0
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
     "m_ObjectId": "a84cb1825a264792b6e635c99c1b223e",
@@ -9049,6 +9122,36 @@
         "x": 0.0,
         "y": 1.0
     }
+}
+
+{
+    "m_SGVersion": 3,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.ColorShaderProperty",
+    "m_ObjectId": "afe152a0ae424072819064e5231fb4d5",
+    "m_Guid": {
+        "m_GuidSerialized": "31a4bb35-290e-40b4-9e7f-c2b968336638"
+    },
+    "m_Name": "AmbientEquator",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "AmbientEquator",
+    "m_DefaultReferenceName": "_AmbientEquator",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "isMainColor": false,
+    "m_ColorMode": 0
 }
 
 {
@@ -11679,6 +11782,36 @@
 }
 
 {
+    "m_SGVersion": 3,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.ColorShaderProperty",
+    "m_ObjectId": "e94207160c614cd994a326a2cc39aa9d",
+    "m_Guid": {
+        "m_GuidSerialized": "2546c821-d290-496c-be14-f6c279f57cf3"
+    },
+    "m_Name": "AmbientGround",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "AmbientGround",
+    "m_DefaultReferenceName": "_AmbientGround",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "isMainColor": false,
+    "m_ColorMode": 0
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
     "m_ObjectId": "e9af34e554bb4c638b78b669eb020913",
@@ -12287,6 +12420,27 @@
         "e32": 0.0,
         "e33": 1.0
     }
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+    "m_ObjectId": "f5139e89ca1749b8aaad8c0bac72e0b3",
+    "m_Name": "Ambient",
+    "m_ChildObjectList": [
+        {
+            "m_Id": "a5987de87fd94f41bc8673b6d624ece4"
+        },
+        {
+            "m_Id": "afe152a0ae424072819064e5231fb4d5"
+        },
+        {
+            "m_Id": "e94207160c614cd994a326a2cc39aa9d"
+        },
+        {
+            "m_Id": "694bad8468a647cb92aa75a545eadf25"
+        }
+    ]
 }
 
 {
