@@ -19,6 +19,7 @@ namespace Island
     [Serializable]
     public class FloraElement
     {
+	public string Name;
         public float Density = 0.2f;
         public float BaseSize = 1.0f;
         public float MinSize = 1.0f;
@@ -34,11 +35,11 @@ namespace Island
      * Note that biotope only handle the vegetation part of the biome
      */
     [Serializable]
-    public class Flora
+    public class Flora : MonoBehaviour
     {
 
         // The parent Game Object in which the vegetals with be spawn under
-        public GameObject Parent;
+        public GameObject Parent{get; set;}
 
         // The margin between the area edges and the actuall flora
         public int DistanceFromEdge = 1;
@@ -61,10 +62,14 @@ namespace Island
             {
                 _area = ShrinkArea(DistanceFromEdge);
             }
+
         }
 
         public FloraElement[] Generate(FloraType type = FloraType.Chaos)
         {
+
+	    if(Fertility == 0)
+		return new FloraElement[0];
 
             // Generate random points (aka spread points)
             SpreadPoints spread = new SpreadPoints(_area, Fertility);
