@@ -75,7 +75,7 @@ public class NomadHouseGenerator : MonoBehaviour
         for (int i = 0; i < 16; i++)
         {
             ElementData ground = GetRandomElement(groundElements);
-            if (ground != null && Random.value <= ground.probability)
+            if (ground != null && Random.value <= ground.probability && i != doorSlot)
             {
                 SpawnElement(ground, i);
             }
