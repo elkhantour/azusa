@@ -16,16 +16,20 @@ namespace Island
         Arid, //++ rock, --grass, --tree
     }
 
+
     [Serializable]
     public class FloraElement
     {
         public string Name;
+        public GameObject Mesh;
         public float Density = 0.2f;
         public float BaseSize = 1.0f;
         public float MinSize = 1.0f;
         public float MaxSize = 1.0f;
-        public GameObject Mesh;
+        [Tooltip("The Minimum distance allowed between two entities")]
+        public float Radius = 0.0f;
     }
+
 
     public class FloraMask
     {
@@ -47,7 +51,7 @@ namespace Island
         // The parent Game Object in which the vegetals with be spawn under
         public GameObject Parent { get; set; }
 
-	public FloraType type = FloraType.Chaos;
+        public FloraType type = FloraType.Chaos;
         // The margin between the area edges and the actuall flora
         public int DistanceFromEdge = 1;
         // TODO: explain usage
@@ -57,19 +61,18 @@ namespace Island
         public int Fertility = 1000; // Total points
 
         [SerializeField]
-        public List<FloraElement> Elements = new List<FloraElement>();
+        /**
+         * To avoid clamping, We need to create a hierarchy for our flora elements. 
+         */
+        public List<FloraElement> BigElements = new List<FloraElement>();
+        public List<FloraElement> MediumElements = new List<FloraElement>();
+        public List<FloraElement> SmallElements = new List<FloraElement>();
 
-        private Mesh _area;
+        private GameObject _area;
 
-        public void Init(Mesh area)
+        public void Init(GameObject area)
         {
             _area = area;
-
-            if (DistanceFromEdge > 0)
-            {
-                _area = ShrinkArea(DistanceFromEdge);
-            }
-
         }
 
         private void DrawDebug(List<FloraElement> enumItems)
@@ -97,6 +100,23 @@ namespace Island
             }
         }
 
+        private bool IsInsideMask(Vector3 position, List<FloraMask> masks, float exclusionBuffer = 2.0f)
+        {
+            foreach (var mask in masks)
+            {
+                // Get the radius of the outer-most ring
+                float distanceToMask = Vector3.Distance(position, mask.Position);
+
+                if (distanceToMask < (mask.Radius + exclusionBuffer))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+
+        }
+
         public FloraElement[] Generate(List<FloraMask> masks = null)
         {
 
@@ -105,38 +125,45 @@ namespace Island
 
 
             // Generate random points (aka spread points)
-            SpreadPoints spread = new SpreadPoints(_area, Fertility);
-            List<Vector3> points = spread.GeneratePoints().ToList();
+            PointDistributor spread = new PointDistributor(_area, DistanceFromEdge);
+            List<Vector3> points = spread.GetRandomPoints(Fertility);
 
             List<int> availableIndex = Enumerable.Range(0, points.Count - 1).ToList();
-            List<FloraElement> enumItems = Elements.ToList();
+            List<FloraElement> enumItems = SmallElements.ToList();
 
             float sumDensity = 0.0f;
             enumItems.ForEach(item => sumDensity += item.Density);
 
-            //adding points randomly in function of density
+            // Adding points randomly in function of density
             foreach (FloraElement item in enumItems)
             {
                 float densityToNumber = Mathf.FloorToInt(item.Density * points.Count / sumDensity);
-                List<Vector3> positions = new List<Vector3>();
 
                 for (int n = 0; n < densityToNumber; n++)
                 {
-                    int randomIndex = UnityEngine.Random.Range(0, availableIndex.Count - 1);
-                    Vector3 position = points[randomIndex];
+                    if (availableIndex.Count == 0) break;
 
-                    //Add to item array
-                    positions.Add(position);
+                    // Pick a random point in the available index list
+                    int randomIndexLocation = UnityEngine.Random.Range(0, availableIndex.Count);
+                    int pointIndex = availableIndex[randomIndexLocation];
+                    Vector3 position = points[pointIndex];
 
-                    //Remove selected indexes from available Index
-                    availableIndex.RemoveAt(randomIndex);
+                    // If it's in a mask, skip this point but DON'T increment 'n' 
+                    // so we try to find a different valid spot for this item.
+                    if (IsInsideMask(position, masks))
+                    {
+                        availableIndex.RemoveAt(randomIndexLocation);
+                        n--; // Retry this "count" with a new random index
+                        continue;
+                    }
 
-                    // Spawn with random Y rotation for organic look
+                    // Remove index so it's not picked again
+                    availableIndex.RemoveAt(randomIndexLocation);
+
+                    // Standard instantiation logic...
                     Quaternion rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360f), 0);
-
                     GameObject instance = GameObject.Instantiate(item.Mesh, position, rotation);
 
-                    // Randomize the Size
                     float randomScale = UnityEngine.Random.Range(item.MinSize, item.MaxSize);
                     instance.transform.localScale = Vector3.one * item.BaseSize * randomScale;
 
@@ -155,20 +182,6 @@ namespace Island
             return enumItems.ToArray();
         }
 
-        private Mesh ShrinkArea(float value)
-        {
-
-            // TODO Debug why triangulator doesn't output the right mesh
-            //Downsample and simplify shape
-            //Mesh shrinkMesh = MeshUtils.DownSample(_area, AreaVertices);
-            Mesh shrinkMesh = _area;
-            shrinkMesh = MeshUtils.Shrink(shrinkMesh, value);
-
-            return shrinkMesh;
-            //Lost triangulation while downsampling
-            //Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(shrinkMesh.vertices));
-            //return triangulator.Mesh;
-        }
 
 
     }

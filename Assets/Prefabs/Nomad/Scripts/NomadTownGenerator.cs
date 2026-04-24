@@ -27,9 +27,7 @@ public class NomadTownGenerator : MonoBehaviour
 
     public void GenerateTown()
     {
-        ClearTown();
-
-
+        //ClearTown();
         SpawnCenter();
 
         foreach (var ring in Rings)

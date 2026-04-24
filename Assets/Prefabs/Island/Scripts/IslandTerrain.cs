@@ -17,6 +17,7 @@ namespace Island
 
         //Mesh
         public List<ChunkCollider> ChunkColliders = new List<ChunkCollider>();
+        private List<GameObject> Parts = new List<GameObject>();
         private const string CHUNK_COLLIDER_NAME = "ChunkCollider";
         private Mesh Mesh;
 
@@ -27,45 +28,59 @@ namespace Island
 
         public void Init()
         {
-            gameObject.AddComponent<MeshRenderer>();
-            gameObject.AddComponent<MeshFilter>();
-
-            //Add Materials
-            gameObject.GetComponent<MeshRenderer>().materials = new Material[] {
-        GroundMaterial,
-    RockMaterial,
-    RockMaterial,
-    RockMaterial
-        };
 
             //Inheritance from Draggable
             Draggable draggable = gameObject.GetComponent<Draggable>();
             draggable.HitNameFilter = CHUNK_COLLIDER_NAME;
 
-            gameObject.GetComponent<MeshFilter>().mesh = UpdateMesh();
-            UpdateBounds();
+            Chunk baseChunk = new Chunk();
+            baseChunk.Radius = Size;
+            baseChunk.Generate();
+
+            //UpdateBounds();
+
+            // Create Gameobject and filter for each island parts
+            // TODO: investigate why c# doesn't like [(int)ChunkPart.Ground] = ...
+            Material[] materialsMap = new Material[(int)Chunk.Part.COUNT] { GroundMaterial, RockMaterial };
+
+            for (int i = 0; i < (int)Chunk.Part.COUNT; i++)
+            {
+                string name = ((Chunk.Part)i).ToString();
+                GameObject part = new GameObject(name);
+                part.transform.SetParent(this.transform, false);
+
+                MeshFilter mf = part.AddComponent<MeshFilter>();
+                MeshRenderer mr = part.AddComponent<MeshRenderer>();
+
+                mf.mesh = baseChunk.GetPartMesh((Chunk.Part)i);
+                mr.material = materialsMap[i];
+
+                // cache the gameobjects for future retrieval
+                Parts.Add(part);
+            }
 
         }
 
-        public Mesh UpdateMesh()
+        public void UpdateMesh()
         {
 
             //Generate Base Chunk
             if (ChunkColliders.Count == 0)
             {
                 Chunk baseChunk = new Chunk();
-                baseChunk.radius = Size;
-                Mesh chunkMesh = baseChunk.Mesh;
+                baseChunk.Radius = Size;
+                baseChunk.Generate();
 
+                //Mesh chunkMesh = baseChunk.Mesh;
                 //Add to chunk cache list
-                ChunkColliders.Add(new ChunkCollider() { Chunk = baseChunk });
-                return chunkMesh;
+                //ChunkColliders.Add(new ChunkCollider() { Chunk = baseChunk });
+                //return chunkMesh;
             }
 
             //Assign Solo Chunk
             if (ChunkColliders.Count == 1)
             {
-                return ChunkColliders[0].Chunk.Mesh;
+                //return ChunkColliders[0].Chunk.Mesh;
             }
 
             //Merge chunks
@@ -74,7 +89,7 @@ namespace Island
 
             }
 
-            return Mesh;
+            // return Mesh;
         }
 
         private void UpdateBounds()
@@ -97,9 +112,9 @@ namespace Island
             }
         }
 
-        public Mesh GetGround()
+        public GameObject GetGround()
         {
-            return ChunkColliders[0].Chunk.Circles.Where(c => c.name == "ground").First().Mesh;
+            return Parts[(int)Chunk.Part.Ground];
         }
 
 

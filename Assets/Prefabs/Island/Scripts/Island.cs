@@ -25,7 +25,6 @@ namespace Island
 
             Terrain.Init();
 
-
             List<FloraMask> floraMask = new List<FloraMask>();
 
             // Generate Towns
@@ -43,7 +42,7 @@ namespace Island
 
 
             // Generate Flora
-            Mesh ground = Terrain.GetGround();
+            GameObject ground = Terrain.GetGround();
             if (ground != null)
             {
                 Flora.Init(ground);

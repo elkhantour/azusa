@@ -12,123 +12,133 @@ namespace Island
     public class Chunk
     {
 
+        public enum Part
+        {
+            Ground,
+            Rock,
+            COUNT,
+        }
+
         //Base Circle Configuration
-        public int segments = 30;
-        public float radius = 1f;
+        public int Segments = 30;
+        public float Radius = 1f;
 
         //Chunk depth
-        public float depth = 3;
-        public List<Vector3> vertices = new List<Vector3>();
+        public float Depth = 3;
+        public List<Vector3> Vertices = new List<Vector3>();
         public List<Circle> Circles { get; private set; } = new List<Circle>();
         public List<BridgeLoop> BridgeLoops { get; private set; } = new List<BridgeLoop>();
+        public List<Mesh> PartMeshes = new List<Mesh>();
         public Bounds Bounds;
 
-        public Mesh Mesh
+        public void Generate()
         {
-            get
-            {
-
-                CombineInstance[] combine = new CombineInstance[4];
-                Mesh finalMesh = new Mesh();
-
-		depth *= radius;
-		
-                List<Circle> circleConfig = new List<Circle>()
+            Depth *= Radius;
+            List<Circle> circleConfig = new List<Circle>()
                 {
                     //1. Set Ground
                     new Circle(){
-                        name = "ground",
-                        segments = segments,
-                        radius = radius,
+                        Name = "ground",
+                        Segments = Segments,
+                        Radius = Radius,
                         Smooth = true,
                         SmoothThresholdAngle = 160,
                         InnerCircles = new float[] { 1.0f },
                     },
-
                     //2. Set Belt
                     new Circle()
                     {
-                        name= "belt",
-                        segments = (int) Mathf.Ceil(segments / 2),
-                        radius = radius / 1.2f,
-                        position = new Vector3(0, -1 * depth, 0),
+                        Name= "belt",
+                        Segments = (int) Mathf.Ceil(Segments / 2),
+                        Radius = Radius / 1.2f,
+                        Position = new Vector3(0, -1 * Depth, 0),
                         Smooth = false
                     },
-
                     //3. Set Root
                     new Circle()
                     {
-                        name = "root",
-                        segments = (int)Mathf.Ceil(segments / 3),
-                        radius = radius / 2.5f,
-                        position = new Vector3(0, -2 * depth, 0),
+                        Name = "root",
+                        Segments = (int)Mathf.Ceil(Segments / 3),
+                        Radius = Radius / 2.5f,
+                        Position = new Vector3(0, -2 * Depth, 0),
                     }
                 };
 
 
-                //Loop through circles to make them spawn 
-                foreach (Circle circle in circleConfig)
+            //Loop through circles to make them spawn 
+            foreach (Circle circle in circleConfig)
+            {
+                circle.Spawn();
+                Circles.Add(circle); // cache circle to global array
+
+                if (circle.Name == "ground")
                 {
-
-                    circle.Spawn();
-
-                    //add circle to global array
-                    Circles.Add(circle);
-
-                    //Add ground to combine instance
-                    if (circle.name == "ground")
-                    {
-                        combine[0].mesh = circle.Mesh;
-                    }
-                    if (circle.name == "root")
-                    {
-                        //flip normal
-                        Mesh flippedMesh = Normal.Flip(circle.Mesh);
-                        //noise up
-                        Vector3[] noiseVert = flippedMesh.vertices;
-
-                        for (int v = 0; v < noiseVert.Length; v++)
-                        {
-                            noiseVert[v].y -= Mathf.PerlinNoise(noiseVert[v].x * 0.6f, noiseVert[v].z * 0.6f) * 2;
-                            noiseVert[v].y += UnityEngine.Random.Range(-1f, 1f);
-                        }
-
-                        flippedMesh.vertices = noiseVert;
-                        circle.UpdateOuterVertices(flippedMesh.vertices); //Update outerring as well since used in bridgeloop
-                        combine[3].mesh = flippedMesh;
-                    }
-
+                    circle.Mesh.RecalculateNormals();
+                    PartMeshes.Add(circle.Mesh);
                 }
 
-                int circlesLength = Circles.Count;
-                //Bridge circles together
-                for (int i = 0; i < circlesLength - 1; i++)
+                if (circle.Name == "root")
                 {
-                    Circle currentCircle = Circles[i];
-                    Circle nextCircle = Circles[(i + 1) % circlesLength];
-
-                    //Bridge Circles together
-                    BridgeLoop bridgeLoop = new BridgeLoop(currentCircle.OuterVertices, nextCircle.OuterVertices)
-                    {
-                        DebugMode = false
-                    };
-
-                    BridgeLoops.Add(bridgeLoop);
-
-                    //Add bridged mesh to combine
-                    Mesh loop = bridgeLoop.Connect();
-                    combine[i + 1].mesh = loop;
+                    noiseRoot(circle);
                 }
-
-                //Combine our chunk parts (Ground, Belt, Root...)
-                finalMesh.CombineMeshes(combine, false, false);
-                finalMesh.name = "chunk";
-
-                Bounds = finalMesh.bounds;
-
-                return finalMesh;
-
             }
+
+
+            // Create a bridge between the ground, belt and root vertices
+            CombineInstance[] combinedRockPart = BridgeRockPart();
+
+            //Combine our chunk parts (Belt + Root...)
+            Mesh rockMesh = new Mesh();
+            rockMesh.CombineMeshes(combinedRockPart, false, false);
+            rockMesh.name = "Island Chunk Rock";
+            PartMeshes.Add(rockMesh);
+            Bounds = rockMesh.bounds;
+        }
+
+        private void noiseRoot(Circle circle)
+        {
+
+            //noise up
+            Vector3[] noiseVert = circle.Mesh.vertices;
+
+            for (int v = 0; v < noiseVert.Length; v++)
+            {
+                noiseVert[v].y -= Mathf.PerlinNoise(noiseVert[v].x * 0.6f, noiseVert[v].z * 0.6f) * 2;
+                noiseVert[v].y += UnityEngine.Random.Range(-1f, 1f);
+            }
+
+            //Update outer ring as well since used in bridgeloop
+            circle.UpdateOuterVertices(circle.Mesh.vertices);
+            circle.Mesh.vertices = noiseVert;
+            circle.Mesh.RecalculateNormals();
+        }
+
+        private CombineInstance[] BridgeRockPart()
+        {
+
+            CombineInstance[] combine = new CombineInstance[3];
+
+            //Bridge circles together
+            for (int i = 0; i < Circles.Count; i++)
+            {
+                Circle currentCircle = Circles[i];
+                Circle nextCircle = Circles[(i + 1) % Circles.Count];
+
+                //Bridge Circles together
+                BridgeLoop bridgeLoop = new BridgeLoop(currentCircle.OuterVertices, nextCircle.OuterVertices)
+                {
+                    DebugMode = false
+                };
+
+                BridgeLoops.Add(bridgeLoop);
+
+                //Add bridged mesh to combine
+                Mesh loop = bridgeLoop.Connect();
+                combine[i].mesh = loop;
+            }
+
+
+            return combine;
         }
 
         private void SetMeshPosition(Mesh mesh, Vector3 position)
@@ -137,6 +147,11 @@ namespace Island
             {
                 mesh.vertices[i] = mesh.vertices[i] + position;
             }
+        }
+
+        public Mesh GetPartMesh(Chunk.Part part)
+        {
+            return PartMeshes[(int)part];
         }
 
     }

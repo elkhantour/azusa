@@ -15,26 +15,26 @@ namespace Island
 
     public interface ICircle
     {
-        public int segments { get; set; }
-        public float radius { get; set; }
-        public float noiseScale { get; set; }
-        public float noiseAmplitude { get; set; }
-        public float randomness { get; set; }
-        public Vector3 position { get; set; }
-        public string name { get; set; }
+        public int Segments { get; set; }
+        public float Radius { get; set; }
+        public float NoiseScale { get; set; }
+        public float NoiseAmplitude { get; set; }
+        public float Randomness { get; set; }
+        public Vector3 Position { get; set; }
+        public string Name { get; set; }
     }
 
 
     public class Circle : ICircle
     {
 
-        public int segments { get; set; } = 30;
-        public float radius { get; set; } = 1f;
-        public float noiseScale { get; set; } = 0.58f;
-        public float noiseAmplitude { get; set; } = 13.41f;
-        public float randomness { get; set; } = 1.3f;
-        public Vector3 position { get; set; } = new Vector3(0, 0, 0);
-        public string name { get; set; }
+        public int Segments { get; set; } = 30;
+        public float Radius { get; set; } = 1f;
+        public float NoiseScale { get; set; } = 0.58f;
+        public float NoiseAmplitude { get; set; } = 13.41f;
+        public float Randomness { get; set; } = 1.3f;
+        public Vector3 Position { get; set; } = new Vector3(0, 0, 0);
+        public string Name { get; set; }
         public bool DebugMode { get; set; } = false;
         public bool Smooth { get; set; } = false;
         public int SmoothThresholdAngle { get; set; } = 110;
@@ -69,15 +69,15 @@ namespace Island
                 InnerVertices = inners.ToArray();
             }
 
-      
+
             Mesh = CombineRings();
-
             Mesh.uv = Uv.Planar(Mesh.vertices);
-
             Mesh.normals = Normal.Set(Mesh);
+            Mesh.name = Name;
 
-            SetPosition(position);
+            SetPosition(Position);
             SetInnerVertexColor(InnerVertexColor);
+
 
             //mesh.normals = Normals(mesh.vertices);
             //mesh.uv = Uvs(mesh.vertices);
@@ -96,7 +96,7 @@ namespace Island
             //Generate triangulation from concating outer + inner vertices
             List<Vector3> outerInner = new List<Vector3>();
             outerInner = outerInner.Concat(OuterVertices).ToList();
-            for(int i = 0; i < InnerVertices.Length; i++)
+            for (int i = 0; i < InnerVertices.Length; i++)
             {
                 outerInner = outerInner.Concat(InnerVertices[i]).ToList();
             }
@@ -104,7 +104,7 @@ namespace Island
             //Generate triangulation and add the outervertices as outer edges, so during clean up we keep inner ring triangles (preventing having to merge our different ring layers)
             Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(outerInner.ToArray()), MeshUtils.ToVector2(OuterVertices));
             return triangulator.Mesh;
-            }
+        }
 
         private Vector2[] SmoothPeak(Vector2[] points, float threshold)
         {
@@ -183,19 +183,19 @@ namespace Island
             //Setup initial points from which the delaunay triangulation will be calculated
             List<Vector2> pts = new List<Vector2>();
 
-            float angleStep = 360.0f / segments;
-            for (int i = 0; i < segments; i++)
+            float angleStep = 360.0f / Segments;
+            for (int i = 0; i < Segments; i++)
             {
 
                 //generate base circle coordinates
                 float angle = Mathf.Deg2Rad * (i * angleStep);
-                float x = Mathf.Cos(angle) * radius;
-                float z = Mathf.Sin(angle) * radius;
+                float x = Mathf.Cos(angle) * Radius;
+                float z = Mathf.Sin(angle) * Radius;
 
                 //add noise
-                float noise = Mathf.PerlinNoise(x * noiseScale, z * noiseScale) * noiseAmplitude;
-                float adjustedRadius = radius + noise;
-                adjustedRadius += Random.Range(-randomness, randomness);
+                float noise = Mathf.PerlinNoise(x * NoiseScale, z * NoiseScale) * NoiseAmplitude;
+                float adjustedRadius = Radius + noise;
+                adjustedRadius += Random.Range(-Randomness, Randomness);
 
                 pts.Add(new Vector2(x * adjustedRadius, z * adjustedRadius));
             }
@@ -204,7 +204,7 @@ namespace Island
             return pts.ToArray();
         }
 
-        private Vector2[] GenerateShrinkCircles (Vector2[] pts, float distance)
+        private Vector2[] GenerateShrinkCircles(Vector2[] pts, float distance)
         {
 
             Mesh tempMesh = new Mesh();
@@ -225,9 +225,9 @@ namespace Island
 
             List<int> tris = new List<int>();
             // Triangles
-            for (int i = 1; i <= segments; i++)
+            for (int i = 1; i <= Segments; i++)
             {
-                int nextIndex = (i % segments) + 1;
+                int nextIndex = (i % Segments) + 1;
 
                 // Triangle made of the center vertex, current vertex, and next vertex
                 tris.Add(0); // Center vertex
@@ -275,7 +275,7 @@ namespace Island
             //Update InnerVertices
             for (int i = 0; i < InnerVertices.Length; i++)
             {
-                for(int v = 0; v < InnerVertices[i].Length; v++)
+                for (int v = 0; v < InnerVertices[i].Length; v++)
                 {
                     InnerVertices[i][v] += position;
                 }
@@ -286,11 +286,11 @@ namespace Island
 
         private void SetInnerVertexColor(Color color)
         {
-            List<Color> colors = new();
-            
-            for(int i = 0; i < Mesh.vertices.Length;i++)
+            List<Color> colors = new List<Color>();
+
+            for (int i = 0; i < Mesh.vertices.Length; i++)
             {
-                colors.Add( i < OuterVertices.Length ? Color.white : Color.black);
+                colors.Add(i < OuterVertices.Length ? Color.white : Color.black);
             }
 
             Mesh.colors = colors.ToArray();
