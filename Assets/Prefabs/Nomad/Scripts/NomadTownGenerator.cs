@@ -108,4 +108,21 @@ public class NomadTownGenerator : MonoBehaviour
         for (int i = transform.childCount - 1; i >= 0; i--)
             DestroyImmediate(transform.GetChild(i).gameObject);
     }
+
+    public Vector3 GetPosition()
+    {
+        return gameObject.transform.position;
+    }
+
+    public float GetOuterRadius()
+    {
+        float radius = 0.0f;
+
+        foreach (var ring in Rings)
+        {
+            radius = Mathf.Max(radius, ring.Radius);
+        }
+
+        return radius;
+    }
 }

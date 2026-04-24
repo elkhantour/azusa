@@ -25,34 +25,31 @@ namespace Island
 
             Terrain.Init();
 
+
+            List<FloraMask> floraMask = new List<FloraMask>();
+
+            // Generate Towns
             foreach (var town in NomadTowns)
             {
                 town.Init();
+
+		// Create flora masks for each town, so the plant don't spawn inside the radius
+                floraMask.Add(new FloraMask()
+                {
+                    Radius = town.GetOuterRadius(),
+                    Position = town.GetPosition(),
+                });
             }
 
 
+            // Generate Flora
             Mesh ground = Terrain.GetGround();
-
             if (ground != null)
-            {
-                GenerateVegetation(ground);
-            }
-        }
-
-
-        private void GenerateVegetation(Mesh ground)
-        {
-
-            //Generate Vegetation
-
-            //Vegetation Config
-            if (ground)
             {
                 Flora.Init(ground);
                 Flora.Parent = gameObject;
-                Flora.Generate();
+                Flora.Generate(floraMask);
             }
-
         }
 
 
