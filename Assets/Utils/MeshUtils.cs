@@ -87,6 +87,7 @@ namespace Utils {
 
 
             mesh.vertices = vertices.ToArray();
+	    mesh.RecalculateBounds();
 
             return mesh;
 

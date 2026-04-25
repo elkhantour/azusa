@@ -44,7 +44,7 @@ namespace Utils
 
         public GameObject TargetObject { get; private set; }
         private float _margin = 0.0f;
-        private Mesh _targetMesh;
+        private Mesh _internalMesh;
         private float _areaSum { get; set; }
         private List<Triangle> _triangles { get; set; } = new List<Triangle>();
 
@@ -52,15 +52,15 @@ namespace Utils
         {
             TargetObject = ta;
 
-	    // make a copy of the mesh to freely manipulate it (i.e. shrinking)
-            CopyMeshFromGameObject(TargetObject, out _targetMesh);
+            // make a copy of the mesh to freely manipulate it (i.e. shrinking)
+            CopyMeshFromGameObject(TargetObject, out _internalMesh);
 
-	    Debug.Log(_targetMesh);
+            Debug.Log(_internalMesh);
             _margin = margin;
 
             if (_margin > 0)
             {
-                MeshUtils.Shrink(_targetMesh, _margin);
+                MeshUtils.Shrink(_internalMesh, _margin);
             }
         }
 
@@ -90,20 +90,23 @@ namespace Utils
 
         }
 
+        // TODO: Currently we spawn point randomly on each triangle,
+        // but couldn't we just randomly spawn points on the bound area
+        // an then remove the ones out of the mesh? (like the Jittered Grid method)
         public List<Vector3> GetRandomPoints(int pointNumbers)
         {
 
             List<Vector3> positions = new List<Vector3>();
 
-	    	    Debug.Log(_targetMesh);
-            if (_targetMesh == null)
+            Debug.Log(_internalMesh);
+            if (_internalMesh == null)
             {
                 Debug.LogWarning("No mesh were found in the provided Game Object. Make sure the Game Object has a valid Mesh Filter component with a Mesh in it.");
                 return positions;
             }
 
 
-            _areaSum = CalculateAreaSum(_targetMesh.triangles);
+            _areaSum = CalculateAreaSum(_internalMesh.triangles);
 
             for (int i = 0; i < pointNumbers; i++)
             {
@@ -118,17 +121,36 @@ namespace Utils
 
         public List<Vector3> GetJitteredGridPoints(float cellSize = 1.0f, float jitter = 0.4f, float stagger = 0.5f)
         {
-
             List<Vector3> positions = new List<Vector3>();
 
-            MeshFilter meshFilter = TargetObject.GetComponent<MeshFilter>();
+            // Get references
+            MeshFilter mf = TargetObject.GetComponent<MeshFilter>();
+            MeshCollider mc = TargetObject.GetComponent<MeshCollider>();
 
-            // Transform bounds to world space if the object is moved/scaled
-            Vector3 min = _targetMesh.bounds.min;
-            Vector3 max = _targetMesh.bounds.max;
-	    
+            if (mf == null || mc == null)
+            {
+                Debug.LogError("TargetObject needs both a MeshFilter and a MeshCollider!");
+                return positions;
+            }
+
+            // Store OLD references (use sharedMesh to avoid auto-instantiating copies)
+            Mesh originalMesh = mf.sharedMesh;
+            Mesh originalColliderMesh = mc.sharedMesh;
+
+            // Swap in the shrunk mesh for the Raycast
+            mf.sharedMesh = _internalMesh;
+            mc.sharedMesh = _internalMesh;
+            // Force Physics to update immediately so the Raycast "sees" the shrunken shape
+            Physics.SyncTransforms();
+
+            // Calculate bounds based on the shrunken mesh
+            Bounds bounds = _internalMesh.bounds;
+            // If object is scaled/moved, transform these to World Space
+            Vector3 min = TargetObject.transform.TransformPoint(bounds.min);
+            Vector3 max = TargetObject.transform.TransformPoint(bounds.max);
+
             int rowCount = 0;
-            float rayStartHeight = max.y + 5.0f; // Start ray above the highest point
+            float rayStartHeight = max.y + 5.0f;
 
             for (float z = min.z; z < max.z; z += cellSize)
             {
@@ -136,17 +158,14 @@ namespace Utils
 
                 for (float x = min.x + xOffset; x < max.x; x += cellSize)
                 {
-                    float adjustedPosition = cellSize * jitter;
-                    float jitterX = UnityEngine.Random.Range(-adjustedPosition, adjustedPosition);
-                    float jitterZ = UnityEngine.Random.Range(-adjustedPosition, adjustedPosition);
+                    float range = cellSize * jitter;
+                    float jitterX = UnityEngine.Random.Range(-range, range);
+                    float jitterZ = UnityEngine.Random.Range(-range, range);
 
                     Vector3 rayOrigin = new Vector3(x + jitterX, rayStartHeight, z + jitterZ);
 
-                    // Cast ray down to find the mesh surface
                     if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit))
                     {
-			Debug.Log(hit);
-                        // Ensure we actually hit the island mesh and not something else
                         if (hit.collider.gameObject == TargetObject)
                         {
                             positions.Add(hit.point);
@@ -156,10 +175,13 @@ namespace Utils
                 rowCount++;
             }
 
+            // 4. Restore the original state so the island looks normal again
+            mf.sharedMesh = originalMesh;
+            mc.sharedMesh = originalColliderMesh;
+            Physics.SyncTransforms();
 
             return positions;
         }
-
 
         /// <summary>
         /// Calculates the area of a triangle using Heron's Formula.
@@ -204,9 +226,9 @@ namespace Utils
                     Vertices =
                       new int[3] { triangles[t], triangles[t + 1], triangles[t + 2] },
                     Points = new Vector3[3] {
-            _targetMesh.vertices[triangles[t]],
-        _targetMesh.vertices[triangles[t + 1]],
-    _targetMesh.vertices[triangles[t + 2]],
+            _internalMesh.vertices[triangles[t]],
+        _internalMesh.vertices[triangles[t + 1]],
+    _internalMesh.vertices[triangles[t + 2]],
                         }
                 };
 
