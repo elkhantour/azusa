@@ -118,10 +118,9 @@ namespace Utils
             return positions;
         }
 
-
-        public List<Vector3> GetJitteredGridPoints(float cellSize = 1.0f, float jitter = 0.4f, float stagger = 0.5f)
+        public Dictionary<Vector2Int, Vector3> GetJitteredGridPoints(float cellSize = 1.0f, float jitter = 0.4f, float stagger = 0.5f)
         {
-            List<Vector3> positions = new List<Vector3>();
+            var gridPoints = new Dictionary<Vector2Int, Vector3>();
 
             // Get references
             MeshFilter mf = TargetObject.GetComponent<MeshFilter>();
@@ -130,7 +129,7 @@ namespace Utils
             if (mf == null || mc == null)
             {
                 Debug.LogError("TargetObject needs both a MeshFilter and a MeshCollider!");
-                return positions;
+                return gridPoints;
             }
 
             // Store OLD references (use sharedMesh to avoid auto-instantiating copies)
@@ -149,30 +148,38 @@ namespace Utils
             Vector3 min = TargetObject.transform.TransformPoint(bounds.min);
             Vector3 max = TargetObject.transform.TransformPoint(bounds.max);
 
-            int rowCount = 0;
             float rayStartHeight = max.y + 5.0f;
 
-            for (float z = min.z; z < max.z; z += cellSize)
+            // Calculate how many steps we need for X and Z
+            int colCount = Mathf.CeilToInt((max.x - min.x) / cellSize);
+            int rowCount = Mathf.CeilToInt((max.z - min.z) / cellSize);
+
+            for (int r = 0; r < rowCount; r++)
             {
-                float xOffset = (rowCount % 2 == 0) ? 0 : cellSize * stagger;
-
-                for (float x = min.x + xOffset; x < max.x; x += cellSize)
+                for (int c = 0; c < colCount; c++)
                 {
+                    // 1. Calculate base position
+                    float xBase = min.x + (c * cellSize);
+                    float zBase = min.z + (r * cellSize);
+
+                    // 2. Apply Jitter
                     float range = cellSize * jitter;
-                    float jitterX = UnityEngine.Random.Range(-range, range);
-                    float jitterZ = UnityEngine.Random.Range(-range, range);
+                    Vector3 rayOrigin = new Vector3(
+                        xBase + UnityEngine.Random.Range(-range, range),
+                        rayStartHeight,
+                        zBase + UnityEngine.Random.Range(-range, range)
+                    );
 
-                    Vector3 rayOrigin = new Vector3(x + jitterX, rayStartHeight, z + jitterZ);
-
+                    // 3. Raycast
                     if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit))
                     {
                         if (hit.collider.gameObject == TargetObject)
                         {
-                            positions.Add(hit.point);
+                            // Use Vector2Int as the "Address" of this point
+                            gridPoints.Add(new Vector2Int(c, r), hit.point);
                         }
                     }
                 }
-                rowCount++;
             }
 
             // 4. Restore the original state so the island looks normal again
@@ -180,7 +187,7 @@ namespace Utils
             mc.sharedMesh = originalColliderMesh;
             Physics.SyncTransforms();
 
-            return positions;
+            return gridPoints;
         }
 
         /// <summary>

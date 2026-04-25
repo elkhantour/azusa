@@ -59,6 +59,8 @@ namespace Island
         // Enable debug draw boundboxes
         public bool DebugMode = false;
         public int Fertility = 1000; // Total points
+        public float CellSize = 1.0f;
+        public bool DebugCell = false;
 
         [SerializeField]
         /**
@@ -117,71 +119,82 @@ namespace Island
 
         }
 
-        public FloraElement[] Generate(List<FloraMask> masks = null)
+        private void DrawElement(FloraElement element, Vector3 position)
         {
-
-            if (Fertility == 0)
-                return new FloraElement[0];
-
-
-            // Generate random points (aka spread points)
-            PointDistributor spread = new PointDistributor(_area, DistanceFromEdge);
-            List<Vector3> points = spread.GetJitteredGridPoints();
-	    
-            List<int> availableIndex = Enumerable.Range(0, points.Count - 1).ToList();
-            List<FloraElement> enumItems = SmallElements.ToList();
-
-            float sumDensity = 0.0f;
-            enumItems.ForEach(item => sumDensity += item.Density);
-
-            // Adding points randomly in function of density
-            foreach (FloraElement item in enumItems)
-            {
-                float densityToNumber = Mathf.FloorToInt(item.Density * points.Count / sumDensity);
-
-                for (int n = 0; n < densityToNumber; n++)
-                {
-                    if (availableIndex.Count == 0) break;
-
-                    // Pick a random point in the available index list
-                    int randomIndexLocation = UnityEngine.Random.Range(0, availableIndex.Count);
-                    int pointIndex = availableIndex[randomIndexLocation];
-                    Vector3 position = points[pointIndex];
-
-                    // If it's in a mask, skip this point but DON'T increment 'n' 
-                    // so we try to find a different valid spot for this item.
-                    if (IsInsideMask(position, masks))
-                    {
-                        availableIndex.RemoveAt(randomIndexLocation);
-                        n--; // Retry this "count" with a new random index
-                        continue;
-                    }
-
-                    // Remove index so it's not picked again
-                    availableIndex.RemoveAt(randomIndexLocation);
-
-                    // Standard instantiation logic...
-                    Quaternion rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360f), 0);
-                    GameObject instance = GameObject.Instantiate(item.Mesh, position, rotation);
-
-                    float randomScale = UnityEngine.Random.Range(item.MinSize, item.MaxSize);
-                    instance.transform.localScale = Vector3.one * item.BaseSize * randomScale;
-
-                    if (Parent != null) instance.transform.SetParent(Parent.transform);
-                }
-            }
-
-
-            //Debug
-            if (DebugMode)
-            {
-                DrawDebug(enumItems);
-            }
-
-
-            return enumItems.ToArray();
+            GameObject instance = GameObject.Instantiate(element.Mesh, position, Quaternion.Euler(0, UnityEngine.Random.Range(0, 360f), 0));
+            instance.transform.localScale = Vector3.one * element.BaseSize * UnityEngine.Random.Range(element.MinSize, element.MaxSize);
+            if (Parent != null) instance.transform.SetParent(Parent.transform);
         }
 
+        private void DrawDebugCell(Vector3 position)
+        {
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.transform.position = new Vector3(position.x, 0.3f, position.z);
+            quad.transform.rotation = Quaternion.Euler(90, 0, 0); // lay flat
+            quad.transform.localScale = Vector3.one * CellSize;
+        }
+
+        public void Generate(List<FloraMask> masks = null)
+        {
+            if (Fertility == 0) return;
+
+            PointDistributor spread = new PointDistributor(_area, DistanceFromEdge);
+            // We need the raw grid data to know which point belongs to which cell
+            Dictionary<Vector2Int, Vector3> gridData = spread.GetJitteredGridPoints();
+            List<Vector2Int> availableCoords = gridData.Keys.ToList();
+
+            List<FloraElement>[] spawnOrder = new List<FloraElement>[3]{
+            BigElements.ToList(),
+            MediumElements.ToList(),
+            SmallElements.ToList(),
+        };
+
+            float sumDensity = 0.0f;
+            Array.ForEach(spawnOrder, list => list.ForEach(item => sumDensity += item.Density));
+
+            foreach (List<FloraElement> list in spawnOrder)
+            {
+                foreach (FloraElement item in list)
+                {
+                    float densityToNumber = Mathf.FloorToInt(item.Density * gridData.Count / sumDensity);
+
+                    for (int n = 0; n < densityToNumber; n++)
+                    {
+                        if (availableCoords.Count == 0) break;
+
+                        int randomIndex = UnityEngine.Random.Range(0, availableCoords.Count);
+                        Vector2Int coord = availableCoords[randomIndex];
+
+                        // Mask check
+                        if (IsInsideMask(gridData[coord], masks))
+                        {
+                            availableCoords.RemoveAt(randomIndex);
+                            n--; continue;
+                        }
+
+                        // Standard instantiation (adjust rotation and size)
+                        DrawElement(item, gridData[coord]);
+
+                        // Grid-based removal
+                        int range = Mathf.CeilToInt(item.Radius / CellSize);
+
+                        // Remove neighbors within the "X" pattern
+                        availableCoords.RemoveAll(c =>
+                            c.x >= coord.x - range && c.x <= coord.x + range &&
+                            c.y >= coord.y - range && c.y <= coord.y + range
+                        );
+
+                        if (DebugCell)
+                            DrawDebugCell(gridData[coord]);
+
+
+                    }
+                }
+
+                Debug.Log("Available coords: " + availableCoords.Count);
+            }
+
+        }
 
 
     }
