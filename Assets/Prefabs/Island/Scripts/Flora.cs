@@ -190,8 +190,6 @@ namespace Island
 
                     }
                 }
-
-                Debug.Log("Available coords: " + availableCoords.Count);
             }
 
         }
