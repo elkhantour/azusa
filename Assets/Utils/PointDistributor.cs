@@ -126,7 +126,7 @@ namespace Utils
             // Transform bounds to world space if the object is moved/scaled
             Vector3 min = _targetMesh.bounds.min;
             Vector3 max = _targetMesh.bounds.max;
-
+	    
             int rowCount = 0;
             float rayStartHeight = max.y + 5.0f; // Start ray above the highest point
 
@@ -145,6 +145,7 @@ namespace Utils
                     // Cast ray down to find the mesh surface
                     if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit))
                     {
+			Debug.Log(hit);
                         // Ensure we actually hit the island mesh and not something else
                         if (hit.collider.gameObject == TargetObject)
                         {

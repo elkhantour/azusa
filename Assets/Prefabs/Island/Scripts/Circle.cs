@@ -74,10 +74,11 @@ namespace Island
             Mesh.uv = Uv.Planar(Mesh.vertices);
             Mesh.normals = Normal.Set(Mesh);
             Mesh.name = Name;
-
+            Mesh.RecalculateNormals();
+	    Mesh.RecalculateBounds();
+	    
             SetPosition(Position);
             SetInnerVertexColor(InnerVertexColor);
-
 
             //mesh.normals = Normals(mesh.vertices);
             //mesh.uv = Uvs(mesh.vertices);

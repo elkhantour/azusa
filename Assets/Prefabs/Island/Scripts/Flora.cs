@@ -126,8 +126,8 @@ namespace Island
 
             // Generate random points (aka spread points)
             PointDistributor spread = new PointDistributor(_area, DistanceFromEdge);
-            List<Vector3> points = spread.GetRandomPoints(Fertility);
-
+            List<Vector3> points = spread.GetJitteredGridPoints();
+	    
             List<int> availableIndex = Enumerable.Range(0, points.Count - 1).ToList();
             List<FloraElement> enumItems = SmallElements.ToList();
 

@@ -55,6 +55,8 @@ namespace Island
                 mf.mesh = baseChunk.GetPartMesh((Chunk.Part)i);
                 mr.material = materialsMap[i];
 
+                part.AddComponent<MeshCollider>();
+
                 // cache the gameobjects for future retrieval
                 Parts.Add(part);
             }

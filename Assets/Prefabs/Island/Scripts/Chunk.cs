@@ -73,7 +73,6 @@ namespace Island
 
                 if (circle.Name == "ground")
                 {
-                    circle.Mesh.RecalculateNormals();
                     PartMeshes.Add(circle.Mesh);
                 }
 
