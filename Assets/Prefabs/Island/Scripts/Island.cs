@@ -19,11 +19,10 @@ namespace Island
         [Header("Habitants")]
         public List<NomadTownGenerator> NomadTowns = new List<NomadTownGenerator>();
 
-
         private void Start()
         {
-
             Terrain.Init();
+            GameObject ground = Terrain.GetGround();
 
             List<FloraMask> floraMask = new List<FloraMask>();
 
@@ -32,7 +31,7 @@ namespace Island
             {
                 town.Init();
 
-		// Create flora masks for each town, so the plant don't spawn inside the radius
+                // Create flora masks for each town, so the plant don't spawn inside the radius
                 floraMask.Add(new FloraMask()
                 {
                     Radius = town.GetOuterRadius(),
@@ -40,11 +39,9 @@ namespace Island
                 });
             }
 
-
-            // Generate Flora
-            GameObject ground = Terrain.GetGround();
             if (ground != null)
-            {
+            {		
+                // Generate Flora
                 Flora.Init(ground);
                 Flora.Parent = gameObject;
                 Flora.Generate(floraMask);

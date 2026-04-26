@@ -25,6 +25,7 @@ namespace Island
         public int Size = 1;
         public Material GroundMaterial;
         public Material RockMaterial;
+        public GroundTextureBaker GroundTextureBaker;
 
         public void Init()
         {
@@ -60,6 +61,14 @@ namespace Island
                 // cache the gameobjects for future retrieval
                 Parts.Add(part);
             }
+
+
+            // Generate Texture
+            GroundTextureBaker.Init();
+            GameObject ground = GetGround();
+            Texture2D texture = GroundTextureBaker.Bake(ground);
+            MeshRenderer groundRenderer = ground.GetComponent<MeshRenderer>();
+            groundRenderer.material.SetTexture("_BaseMap", texture);
 
         }
 
