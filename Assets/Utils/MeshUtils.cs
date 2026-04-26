@@ -4,7 +4,8 @@ using UnityEngine;
 using Utils;
 
 
-namespace Utils {
+namespace Utils
+{
 
 
     /*
@@ -38,10 +39,10 @@ namespace Utils {
 
             List<Vector2> vectors = new List<Vector2>();
 
-            for(int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 currVert = vertices[i];
-                vectors.Add(new Vector2( currVert.x, currVert.z ));
+                vectors.Add(new Vector2(currVert.x, currVert.z));
             }
 
             return vectors.ToArray();
@@ -65,7 +66,7 @@ namespace Utils {
 
         public static Mesh Shrink(Mesh mesh, float distance)
         {
-            
+
             List<Vector3> vertices = new List<Vector3>();
 
             //Get bisect axes and shrink down mesh
@@ -87,10 +88,26 @@ namespace Utils {
 
 
             mesh.vertices = vertices.ToArray();
-	    mesh.RecalculateBounds();
+            mesh.RecalculateBounds();
 
             return mesh;
 
+        }
+
+        public static Mesh Clone(Mesh src)
+        {
+	    Mesh dest = new Mesh();
+            dest.name = src.name + " (Copy)";
+
+            dest.vertices = src.vertices;
+            dest.triangles = src.triangles;
+            dest.uv = src.uv;
+            dest.normals = src.normals;
+
+            dest.RecalculateNormals();
+            dest.RecalculateBounds();
+
+	    return dest;
         }
 
 

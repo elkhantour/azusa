@@ -14,6 +14,9 @@ namespace Island
         public Color sandColorB = new Color(0.85f, 0.75f, 0.55f);
         public Color grassColorA = new Color(0.35f, 0.55f, 0.2f);
         public Color grassColorB = new Color(0.25f, 0.45f, 0.15f);
+        public Texture2D grassPattern;
+        public float grassPatternSize = 10.0f;
+
 
         [Header("Transition Settings")]
         [Range(0, 1)] public float transitionBlur = 0.1f;
@@ -114,13 +117,15 @@ namespace Island
 
             // Step 2: Shrink and Print Inner Layer
             {
+
                 List<ShrinkPass> shrinkPasses = new List<ShrinkPass>(){
             new ShrinkPass(){Value = grassBeginDistance, Texture = rtGrassBegin},
             new ShrinkPass(){Value = grassEndDistance, Texture = rtGrassEnd}
         };
+                Mesh shrunkMesh = Utils.MeshUtils.Clone(originalMesh);
                 foreach (var pass in shrinkPasses)
                 {
-                    Mesh shrunkMesh = Utils.MeshUtils.Shrink(originalMesh, pass.Value);
+                    Utils.MeshUtils.Shrink(shrunkMesh, pass.Value);
                     groundObj.GetComponent<MeshFilter>().sharedMesh = shrunkMesh;
                     pass.Texture.filterMode = FilterMode.Bilinear;
                     bakeCamera.targetTexture = pass.Texture;
@@ -133,6 +138,8 @@ namespace Island
                 PostProcessMat.SetTexture("_SandMask", rtBase);
                 PostProcessMat.SetTexture("_GrassBegin", rtGrassBegin);
                 PostProcessMat.SetTexture("_GrassEnd", rtGrassEnd);
+                PostProcessMat.SetTexture("_GrassPattern", grassPattern);
+                PostProcessMat.SetFloat("_GrassPatternSize", grassPatternSize);
                 PostProcessMat.SetColor("_SandA", sandColorA);
                 PostProcessMat.SetColor("_SandB", sandColorB);
                 PostProcessMat.SetColor("_GrassA", grassColorA);

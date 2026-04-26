@@ -67,20 +67,12 @@ namespace Utils
         private void CopyMeshFromGameObject(GameObject obj, out Mesh dest)
         {
 
-            dest = new Mesh();
+            dest = null;
             MeshFilter mf = obj.GetComponent<MeshFilter>();
 
             if (mf != null)
             {
-                dest.name = mf.mesh.name + " (Copy)";
-
-                dest.vertices = mf.mesh.vertices;
-                dest.triangles = mf.mesh.triangles;
-                dest.uv = mf.mesh.uv;
-                dest.normals = mf.mesh.normals;
-
-                dest.RecalculateNormals();
-                dest.RecalculateBounds();
+                dest = MeshUtils.Clone(mf.mesh);
             }
             else
             {
