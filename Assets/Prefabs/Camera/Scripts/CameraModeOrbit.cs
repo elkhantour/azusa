@@ -77,27 +77,44 @@ public class CameraModeOrbit : CameraMode
         transform.Translate(CameraObject.transform.forward * scrollWheel * zoomSpeed, Space.World);
 
         // Raycast downward to find the position of the floor
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit))
+        float t = 0.0f;
+        float targetAngle = 0.0f;
+        float distance = 0.0f;
+
+        if (targetObject != null)
         {
-            // Check if the hit object is a child of the floor
-            if (targetObject && hit.transform.IsChildOf(targetObject))
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, Vector3.down, out hit))
             {
-                // Calculate the distance between the camera and the hit point
-                float distance = Vector3.Distance(transform.position, hit.point);
+                // Check if the hit object is a child of the floor
+                if (targetObject && hit.transform.IsChildOf(targetObject))
+                {
+                    // Calculate the distance between the camera and the hit point
+                    distance = Vector3.Distance(transform.position, hit.point);
 
-                // Clamp the distance between minDistance and maxDistance
-                distance = Mathf.Clamp(distance, minDistance, maxDistance);
+                    // Clamp the distance between minDistance and maxDistance
+                    distance = Mathf.Clamp(distance, minDistance, maxDistance);
 
-                // Interpolate the rotation angle based on the distance
-                float t = Mathf.InverseLerp(minDistance, maxDistance, distance);
-                float targetAngle = Mathf.Lerp(minAngle, maxAngle, t);
-
-                // Update the child camera's rotation based on the target angle
-                Quaternion targetRotation = Quaternion.Euler(targetAngle, transform.eulerAngles.y, transform.eulerAngles.z);
-                CameraObject.transform.rotation = Quaternion.Lerp(CameraObject.transform.rotation, targetRotation, Time.deltaTime * 5f);
+                    // Interpolate the rotation angle based on the distance
+                    t = Mathf.InverseLerp(minDistance, maxDistance, distance);
+                    targetAngle = Mathf.Lerp(minAngle, maxAngle, t);
+                }
             }
         }
+        else
+        {
+            // Simplified distance to floor
+            distance = transform.position.y;
+
+            // Clamp and rotate based on this height
+            distance = Mathf.Clamp(distance, minDistance, maxDistance);
+            t = Mathf.InverseLerp(minDistance, maxDistance, distance);
+            targetAngle = Mathf.Lerp(minAngle, maxAngle, t);
+        }
+
+        // Update the child camera's rotation based on the target angle
+        Quaternion targetRotation = Quaternion.Euler(targetAngle, transform.eulerAngles.y, transform.eulerAngles.z);
+        CameraObject.transform.rotation = Quaternion.Lerp(CameraObject.transform.rotation, targetRotation, Time.deltaTime * 5f);
     }
 
     private void Orbit()
