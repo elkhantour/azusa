@@ -69,7 +69,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GrassBase:
-        m_Texture: {fileID: 2800000, guid: 4d89903e796324adaac6618b1d9b24c6, type: 3}
+        m_Texture: {fileID: 2800000, guid: b74c818fddf514ce59488d619afd484e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GrassBegin:
@@ -121,7 +121,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SandBase:
-        m_Texture: {fileID: 2800000, guid: 920e76070bfc14611bce1070afb4e593, type: 3}
+        m_Texture: {fileID: 2800000, guid: 580e3380355bf4274a786c380bdd8275, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SandMask:
@@ -137,7 +137,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TownBase:
-        m_Texture: {fileID: 2800000, guid: c4839422352e94a7d91644d836821b55, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6564892eb43424cd4a38716a7ab1037a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TownBegin:
