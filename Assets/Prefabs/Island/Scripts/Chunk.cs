@@ -44,6 +44,7 @@ namespace Island
                         Smooth = true,
                         SmoothThresholdAngle = 160,
                         InnerCircles = new float[] { 1.0f },
+			NoiseAmplitude = 30.0f,
                     },
                     //2. Set Belt
                     new Circle()

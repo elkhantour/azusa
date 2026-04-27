@@ -6,19 +6,48 @@ namespace Island
 {
     public class GroundTextureBaker : MonoBehaviour
     {
+
+        [System.Serializable]
+        public class GroundTextureArea
+        {
+            public string Name;
+            public Texture2D Base = null;
+            public float BaseScale = 5.0f;
+            public Texture2D Pattern = null;
+            public float PatternScale = 10.0f;
+            public Color ColorA = Color.black;
+            public Color ColorB = Color.black;
+        }
+
         [Header("Texture Settings")]
         public int Resolution = 1024;
         public int ResolutionSmall = 128;
 
-        [Header("Colors")]
-        public Color sandColorA = new Color(0.93f, 0.84f, 0.65f);
-        public Color sandColorB = new Color(0.85f, 0.75f, 0.55f);
-        public Color grassColorA = new Color(0.35f, 0.55f, 0.2f);
-        public Color grassColorB = new Color(0.25f, 0.45f, 0.15f);
-        public Color townColorA = new Color(0.72f, 0.38f, 0.24f);
-        public Color townColorB = new Color(0.58f, 0.28f, 0.16f);
-        public Texture2D grassPattern;
-        public float grassPatternSize = 10.0f;
+        [Header("Sand")]
+        [SerializeField]
+        public GroundTextureArea Sand = new GroundTextureArea()
+        {
+            Name = "Sand",
+            ColorA = new Color(0.93f, 0.84f, 0.65f),
+            ColorB = new Color(0.85f, 0.75f, 0.55f),
+        };
+        [Header("Grass")]
+        [SerializeField]
+        public GroundTextureArea Grass = new GroundTextureArea()
+        {
+            Name = "Grass",
+            ColorA = new Color(0.93f, 0.84f, 0.65f),
+            ColorB = new Color(0.25f, 0.45f, 0.15f),
+        };
+
+        [Header("Town")]
+        [SerializeField]
+        public GroundTextureArea Town = new GroundTextureArea()
+        {
+            Name = "Town",
+            ColorA = new Color(0.72f, 0.38f, 0.24f),
+            ColorB = new Color(0.58f, 0.28f, 0.16f),
+        };
 
         [Header("Transition Settings")]
         [Range(0, 1)]
@@ -37,12 +66,12 @@ namespace Island
         private int GROUND_LAYER_ID = 30;
         private int TOWN_LAYER_ID = 31;
 
-        public class Tex
+        public enum AreaType
         {
-            public RenderTexture texture;
-            public string reference;
-            public int resolution;
-            public int format;
+            Sand,
+            Grass,
+            Town,
+            COUNT
         }
 
         public enum TmpTexType
@@ -56,7 +85,17 @@ namespace Island
             COUNT,
         }
 
+        public class Tex
+        {
+            public RenderTexture texture;
+            public string reference;
+            public int resolution;
+            public int format;
+        }
+
+
         private List<Tex> _tmpTex = null;
+        private List<GroundTextureArea> _areas = null;
 
         public class ShrinkPass
         {
@@ -67,7 +106,26 @@ namespace Island
         public void Init()
         {
             SetupTmpTextures();
+            SetupAreas();
             SetupBakeCamera();
+        }
+
+        private void SetupAreas()
+        {
+            _areas = new()
+            {
+                Sand,
+                Grass,
+                Town,
+            };
+
+            // Set default base and pattern to black if base or pattern textures are null
+            _areas.ForEach(a =>
+            {
+                if (a.Base == null) a.Base = Texture2D.blackTexture;
+                if (a.Pattern == null) a.Pattern = Texture2D.blackTexture;
+            });
+
         }
 
         private void SetupTmpTextures()
@@ -169,19 +227,43 @@ namespace Island
         {
 
             _tmpTex.ForEach(t => PostProcessMat.SetTexture(t.reference, t.texture));
-            PostProcessMat.SetTexture("_GrassPattern", grassPattern);
 
-            PostProcessMat.SetColor("_SandA", sandColorA);
-            PostProcessMat.SetColor("_SandB", sandColorB);
-            PostProcessMat.SetColor("_GrassA", grassColorA);
-            PostProcessMat.SetColor("_GrassB", grassColorB);
-            PostProcessMat.SetColor("_TownA", townColorA);
-            PostProcessMat.SetColor("_TownB", townColorB);
+            // Sand Attributes
+            {
+                PostProcessMat.SetColor("_SandTintA", Sand.ColorA);
+                PostProcessMat.SetColor("_SandTintB", Sand.ColorB);
+                PostProcessMat.SetTexture("_SandPattern", Sand.Pattern);
+                PostProcessMat.SetTexture("_SandBase", Sand.Base);
+                PostProcessMat.SetFloat("_SandBaseScale", Sand.BaseScale);
+                PostProcessMat.SetFloat("_SandPatternScale", Sand.PatternScale);
+            }
 
-            PostProcessMat.SetFloat("_GrassPatternSize", grassPatternSize);
-            PostProcessMat.SetFloat("_Blur", transitionBlur);
-            PostProcessMat.SetFloat("_NoiseAmt", transitionNoiseAmount);
-            PostProcessMat.SetFloat("_NoiseScale", transitionNoiseScale);
+            // Grass Attributes
+            {
+                PostProcessMat.SetColor("_GrassTintA", Grass.ColorA);
+                PostProcessMat.SetColor("_GrassTintB", Grass.ColorB);
+                PostProcessMat.SetTexture("_GrassPattern", Grass.Pattern);
+                PostProcessMat.SetTexture("_GrassBase", Grass.Base);
+                PostProcessMat.SetFloat("_GrassPatternScale", Grass.PatternScale);
+                PostProcessMat.SetFloat("_GrassBaseScale", Grass.BaseScale);
+            }
+
+            // Town Attributes
+            {
+                PostProcessMat.SetColor("_TownTintA", Town.ColorA);
+                PostProcessMat.SetColor("_TownTintB", Town.ColorB);
+                PostProcessMat.SetTexture("_TownPattern", Town.Pattern);
+                PostProcessMat.SetTexture("_TownBase", Town.Base);
+                PostProcessMat.SetFloat("_TownPatternScale", Town.PatternScale);
+                PostProcessMat.SetFloat("_TownBaseScale", Town.BaseScale);
+            }
+
+            // Global Attributes
+            {
+                PostProcessMat.SetFloat("_Blur", transitionBlur);
+                PostProcessMat.SetFloat("_NoiseAmt", transitionNoiseAmount);
+                PostProcessMat.SetFloat("_NoiseScale", transitionNoiseScale);
+            }
         }
 
         private void RenderGround(GameObject groundObj)
@@ -232,13 +314,11 @@ namespace Island
 
             int townCircleSegments = 30;
             float shrink = 3.0f;
+            float margin = 5.0f;
             List<GameObject> circles = new();
 
             foreach (var mask in townMask)
             {
-
-                Debug.Log("Radius: " + mask.Radius);
-
                 // Converts circular radial mask to actual distorted meshes
                 Circle circle = new Circle()
                 {
@@ -246,15 +326,16 @@ namespace Island
                     Segments = townCircleSegments,
                     Smooth = true,
                     SmoothThresholdAngle = 160,
-                    Radius = mask.Radius,
+                    Radius = mask.Radius + margin,
                     Position = mask.Position,
+                    NoiseAmplitude = 2.0f,
                 };
 
                 circle.Spawn();
                 GameObject circleGO = new GameObject();
                 MeshRenderer mr = circleGO.AddComponent<MeshRenderer>();
                 MeshFilter mf = circleGO.AddComponent<MeshFilter>();
-		circleGO.transform.parent = gameObject.transform;
+                circleGO.transform.parent = gameObject.transform;
                 circleGO.layer = TOWN_LAYER_ID;
                 mf.mesh = circle.Mesh;
                 mr.sharedMaterial = WhiteMat;

@@ -193,7 +193,10 @@ namespace Island
                 float dirX = Mathf.Cos(angle);
                 float dirZ = Mathf.Sin(angle);
 
-                float noise = Mathf.PerlinNoise(dirX * NoiseScale, dirZ * NoiseScale) * NoiseAmplitude;
+                float nx = dirX * NoiseScale;
+                float nz = dirZ * NoiseScale;
+
+                float noise = (Mathf.PerlinNoise(nx, nz) - 0.5f) * 2f * NoiseAmplitude;
 
                 float adjustedRadius = Radius + noise;
                 adjustedRadius += Random.Range(-Randomness, Randomness);
