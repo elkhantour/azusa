@@ -83,6 +83,15 @@ namespace Island
             bakeCamera.transform.position = new Vector3(center.x, center.y + 100f, center.z);
         }
 
+        private Texture2D BakeGround(GameObject groundObj)
+        {
+
+        }
+
+        private Texture2D BakeTowns(GameObject groundObj) {
+
+	}
+
         public Texture2D Bake(GameObject groundObj)
         {
 
@@ -93,9 +102,6 @@ namespace Island
             RenderTexture rtGrassBegin = RenderTexture.GetTemporary(downRes, downRes, 24); // Divide by 2 so get blurry result
             RenderTexture rtGrassEnd = RenderTexture.GetTemporary(downRes, downRes, 24);
             RenderTexture finalRT = RenderTexture.GetTemporary(Resolution, Resolution, 0);
-
-            //rtBase.filterMode = FilterMode.Bilinear;
-            //finalRT.filterMode = FilterMode.Bilinear;
 
             // Store original state
             int originalLayer = groundObj.layer;
@@ -169,6 +175,7 @@ namespace Island
 
             return output;
         }
+
 
     }
 
