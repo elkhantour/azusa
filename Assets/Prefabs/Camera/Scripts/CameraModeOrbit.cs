@@ -22,11 +22,16 @@ public class CameraModeOrbit : CameraMode
 
     [Space]
     [Header("Angle")]
-    public Transform targetObject; // The object the camera is looking at
-    public float minDistance = 5f; // Minimum distance from the object
-    public float maxDistance = 20f; // Maximum distance from the object
-    public float minAngle = 10f; // Minimum rotation angle when close to the object
-    public float maxAngle = 45f; // Maximum rotation angle when far from the object
+    [Tooltip("The object from which the camera hit test to define the rotation poin (i.e. grid)")]
+    public Transform targetObject;
+    [Tooltip("Minimum distance from the object")]
+    public float minDistance = 5f;
+    [Tooltip("Maximum distance from the object")]
+    public float maxDistance = 20f;
+    [Tooltip("Minimum rotation angle when close to the object")]
+    public float minAngle = 10f;
+    [Tooltip("Maximum rotation angle when far from the object")]
+    public float maxAngle = 45f;
 
 
     public override void Activate() { }
@@ -68,7 +73,8 @@ public class CameraModeOrbit : CameraMode
     private void ZoomCamera(float scrollWheel)
     {
 
-        transform.Translate(scrollWheel * zoomSpeed * CameraObject.transform.forward, Space.Self);
+        // transform.Translate(scrollWheel * zoomSpeed * CameraObject.transform.forward, Space.Self);
+        transform.Translate(CameraObject.transform.forward * scrollWheel * zoomSpeed, Space.World);
 
         // Raycast downward to find the position of the floor
         RaycastHit hit;

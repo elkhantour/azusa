@@ -12,7 +12,7 @@ public enum CameraState
 public abstract class CameraMode : MonoBehaviour
 {
 
-    public CameraState state;
+    public CameraState state { get; set; }
 
     public abstract void Activate();
     public abstract void Deactivate();
