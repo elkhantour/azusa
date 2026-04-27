@@ -34,7 +34,8 @@ namespace Island
 
         private Camera bakeCamera;
         private RenderTexture islandMask;
-        private int LAYER_ID = 31;
+        private int GROUND_LAYER_ID = 30;
+        private int TOWN_LAYER_ID = 31;
 
         public class Tex
         {
@@ -127,9 +128,10 @@ namespace Island
             bakeCamera.orthographic = true;
             bakeCamera.clearFlags = CameraClearFlags.Color;
             bakeCamera.backgroundColor = Color.black;
-            bakeCamera.enabled = false; // We trigger it manually
-            bakeCamera.cullingMask =
-                1 << LAYER_ID; // Only render a specific "Baking" layer (Layer 31)
+            // We trigger it manually
+            bakeCamera.enabled = false;
+            // Only render a specific "Baking" layer (Layer 31)
+            bakeCamera.cullingMask = 1 << GROUND_LAYER_ID;
         }
 
         private void FitCameraToMesh(GameObject obj, float padding = 0.1f)
@@ -182,32 +184,8 @@ namespace Island
             PostProcessMat.SetFloat("_NoiseScale", transitionNoiseScale);
         }
 
-        private Texture2D BakeGround(GameObject groundObj)
+        private void RenderGround(GameObject groundObj)
         {
-            return Texture2D.whiteTexture;
-        }
-
-        private Texture2D BakeTowns(GameObject groundObj)
-        {
-            return Texture2D.whiteTexture;
-        }
-
-        public Texture2D Bake(GameObject groundObj)
-        {
-
-            FitCameraToMesh(groundObj, 0.0f);
-
-            _tmpTex.ForEach(t => t.texture = RenderTexture.GetTemporary(t.resolution, t.resolution, t.format));
-
-            // Store original state
-            int originalLayer = groundObj.layer;
-            Vector3 originalPos = groundObj.transform.position;
-            Material originalMat = groundObj.GetComponent<Renderer>().sharedMaterial;
-            Mesh originalMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
-
-            groundObj.layer = LAYER_ID;
-            // groundObj.transform.position = bakeCamera.transform.position +
-            // Vector3.down * 10;
 
             {
                 // Step 1: Print Outer Layer (Sand/Full Shape)
@@ -219,9 +197,8 @@ namespace Island
 
             // Step 2: Shrink and Print Inner Layer
             {
-
-                List<ShrinkPass> shrinkPasses = new List<ShrinkPass>()
-        {
+                Mesh originalMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
+                List<ShrinkPass> shrinkPasses = new List<ShrinkPass>() {
         new ShrinkPass()
         {
         Value = grassBeginDistance,
@@ -244,6 +221,82 @@ namespace Island
                 }
             }
 
+        }
+
+        private void RenderTowns(List<RadialMask> townMask)
+        {
+
+            // Update camera culling mask so it only render the town meshes
+            // and not the ground one.
+            bakeCamera.cullingMask = 1 << TOWN_LAYER_ID;
+
+            int townCircleSegments = 30;
+            float shrink = 3.0f;
+            List<GameObject> circles = new();
+
+            foreach (var mask in townMask)
+            {
+
+                Debug.Log("Radius: " + mask.Radius);
+
+                // Converts circular radial mask to actual distorted meshes
+                Circle circle = new Circle()
+                {
+                    Name = "town_TEMP",
+                    Segments = townCircleSegments,
+                    Smooth = true,
+                    SmoothThresholdAngle = 160,
+                    Radius = mask.Radius,
+                    Position = mask.Position,
+                };
+
+                circle.Spawn();
+                GameObject circleGO = new GameObject();
+                MeshRenderer mr = circleGO.AddComponent<MeshRenderer>();
+                MeshFilter mf = circleGO.AddComponent<MeshFilter>();
+		circleGO.transform.parent = gameObject.transform;
+                circleGO.layer = TOWN_LAYER_ID;
+                mf.mesh = circle.Mesh;
+                mr.sharedMaterial = WhiteMat;
+                circles.Add(circleGO);
+            }
+
+            // Render the initial mask in the begin texture
+            bakeCamera.targetTexture = TmpTex(TmpTexType.TownMaskBegin);
+            bakeCamera.Render();
+
+            // Apply shrinking
+            circles.ForEach(c => Utils.MeshUtils.Shrink(c.GetComponent<MeshFilter>().mesh, shrink));
+            // Render the initial mask in the end texture
+            bakeCamera.targetTexture = TmpTex(TmpTexType.TownMaskEnd);
+            bakeCamera.Render();
+
+            // clean up
+            circles.ForEach(c => Destroy(c));
+            bakeCamera.cullingMask = 1 << GROUND_LAYER_ID;
+        }
+
+
+        public Texture2D Bake(GameObject groundObj, List<RadialMask> townMask = null)
+        {
+
+            FitCameraToMesh(groundObj, 0.0f);
+
+            _tmpTex.ForEach(t => t.texture = RenderTexture.GetTemporary(t.resolution, t.resolution, t.format));
+
+            // Store original state
+            int originalLayer = groundObj.layer;
+            Vector3 originalPos = groundObj.transform.position;
+            Material originalMat = groundObj.GetComponent<Renderer>().sharedMaterial;
+            Mesh originalMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
+
+            groundObj.layer = GROUND_LAYER_ID;
+
+            RenderGround(groundObj);
+
+            if (townMask != null)
+                RenderTowns(townMask);
+
             MapShaderParameters();
             Graphics.Blit(TmpTex(TmpTexType.SandMask), TmpTex(TmpTexType.FinalTexture), PostProcessMat);
 
@@ -253,7 +306,6 @@ namespace Island
             RenderTexture.active = TmpTex(TmpTexType.FinalTexture);
             output.ReadPixels(new Rect(0, 0, Resolution, Resolution), 0, 0);
             output.Apply();
-
 
 
             {

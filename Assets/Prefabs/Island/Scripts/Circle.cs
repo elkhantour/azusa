@@ -75,8 +75,8 @@ namespace Island
             Mesh.normals = Normal.Set(Mesh);
             Mesh.name = Name;
             Mesh.RecalculateNormals();
-	    Mesh.RecalculateBounds();
-	    
+            Mesh.RecalculateBounds();
+
             SetPosition(Position);
             SetInnerVertexColor(InnerVertexColor);
 
@@ -188,17 +188,20 @@ namespace Island
             for (int i = 0; i < Segments; i++)
             {
 
-                //generate base circle coordinates
                 float angle = Mathf.Deg2Rad * (i * angleStep);
-                float x = Mathf.Cos(angle) * Radius;
-                float z = Mathf.Sin(angle) * Radius;
 
-                //add noise
-                float noise = Mathf.PerlinNoise(x * NoiseScale, z * NoiseScale) * NoiseAmplitude;
+                float dirX = Mathf.Cos(angle);
+                float dirZ = Mathf.Sin(angle);
+
+                float noise = Mathf.PerlinNoise(dirX * NoiseScale, dirZ * NoiseScale) * NoiseAmplitude;
+
                 float adjustedRadius = Radius + noise;
                 adjustedRadius += Random.Range(-Randomness, Randomness);
 
-                pts.Add(new Vector2(x * adjustedRadius, z * adjustedRadius));
+                Vector2 position = new Vector2(dirX * adjustedRadius, dirZ * adjustedRadius);
+
+                pts.Add(position);
+
             }
 
 

@@ -62,11 +62,13 @@ namespace Island
                 Parts.Add(part);
             }
 
+        }
 
-            // Generate Texture
+        public void BakeTexture(List<RadialMask> townMasks = null)
+        {
             GroundTextureBaker.Init();
             GameObject ground = GetGround();
-            Texture2D texture = GroundTextureBaker.Bake(ground);
+            Texture2D texture = GroundTextureBaker.Bake(ground, townMasks);
             MeshRenderer groundRenderer = ground.GetComponent<MeshRenderer>();
             groundRenderer.material.SetTexture("_BaseMap", texture);
 
@@ -105,10 +107,6 @@ namespace Island
 
         private void UpdateBounds()
         {
-
-            //Purge
-
-
             //Add Collider as Children as Unity can by default only handle 1 collider / gameobjects
             foreach (ChunkCollider chunkCollider in ChunkColliders)
             {

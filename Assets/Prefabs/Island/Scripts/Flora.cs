@@ -31,13 +31,6 @@ namespace Island
     }
 
 
-    public class FloraMask
-    {
-        public float Radius;
-        public Vector3 Position;
-    }
-
-
     /*
      * Generate a flora within a certain area
      * Takes in a list of gameobject along with respective density
@@ -102,7 +95,7 @@ namespace Island
             }
         }
 
-        private bool IsInsideMask(Vector3 position, List<FloraMask> masks, float exclusionBuffer = 2.0f)
+        private bool IsInsideMask(Vector3 position, List<RadialMask> masks, float exclusionBuffer = 2.0f)
         {
             foreach (var mask in masks)
             {
@@ -134,7 +127,7 @@ namespace Island
             quad.transform.localScale = Vector3.one * CellSize;
         }
 
-        public void Generate(List<FloraMask> masks = null)
+        public void Generate(List<RadialMask> masks = null)
         {
             if (Fertility == 0) return;
 
