@@ -8,19 +8,23 @@ namespace Island
     {
         [Header("Texture Settings")]
         public int Resolution = 1024;
+        public int ResolutionSmall = 128;
 
         [Header("Colors")]
         public Color sandColorA = new Color(0.93f, 0.84f, 0.65f);
         public Color sandColorB = new Color(0.85f, 0.75f, 0.55f);
         public Color grassColorA = new Color(0.35f, 0.55f, 0.2f);
         public Color grassColorB = new Color(0.25f, 0.45f, 0.15f);
+        public Color townColorA = new Color(0.72f, 0.38f, 0.24f);
+        public Color townColorB = new Color(0.58f, 0.28f, 0.16f);
         public Texture2D grassPattern;
         public float grassPatternSize = 10.0f;
 
-
         [Header("Transition Settings")]
-        [Range(0, 1)] public float transitionBlur = 0.1f;
-        [Range(0, 1)] public float transitionNoiseAmount = 0.2f;
+        [Range(0, 1)]
+        public float transitionBlur = 0.1f;
+        [Range(0, 1)]
+        public float transitionNoiseAmount = 0.2f;
         public float transitionNoiseScale = 15f;
         public float grassBeginDistance = 0.5f;
         public float grassEndDistance = 0.2f;
@@ -32,6 +36,27 @@ namespace Island
         private RenderTexture islandMask;
         private int LAYER_ID = 31;
 
+        public class Tex
+        {
+            public RenderTexture texture;
+            public string reference;
+            public int resolution;
+            public int format;
+        }
+
+        public enum TmpTexType
+        {
+            SandMask,
+            GrassMaskBegin,
+            GrassMaskEnd,
+            TownMaskBegin,
+            TownMaskEnd,
+            FinalTexture,
+            COUNT,
+        }
+
+        private List<Tex> _tmpTex = null;
+
         public class ShrinkPass
         {
             public float Value;
@@ -40,7 +65,54 @@ namespace Island
 
         public void Init()
         {
+            SetupTmpTextures();
             SetupBakeCamera();
+        }
+
+        private void SetupTmpTextures()
+        {
+            ;
+
+            _tmpTex = new()
+            {
+                new()
+                {
+                    reference = "_SandMask",
+                    resolution = Resolution,
+                    format = 24
+                },
+                new()
+                {
+                    reference = "_GrassBegin",
+                    resolution = ResolutionSmall,
+                    format = 24
+                },
+                new()
+                {
+                    reference = "_GrassEnd",
+                    resolution = ResolutionSmall,
+                    format = 24
+                },
+                new()
+                {
+                    reference = "_TownBegin",
+                    resolution = ResolutionSmall,
+                    format = 24
+                },
+                new()
+                {
+                    reference = "_TownEnd",
+                    resolution = Resolution,
+                    format = 24
+                },
+                new()
+                {
+                    reference = "_FinalTexture",
+                    resolution = Resolution,
+                    format = 0
+                },
+            };
+
         }
 
         private void SetupBakeCamera()
@@ -56,13 +128,15 @@ namespace Island
             bakeCamera.clearFlags = CameraClearFlags.Color;
             bakeCamera.backgroundColor = Color.black;
             bakeCamera.enabled = false; // We trigger it manually
-            bakeCamera.cullingMask = 1 << LAYER_ID; // Only render a specific "Baking" layer (Layer 31)
+            bakeCamera.cullingMask =
+                1 << LAYER_ID; // Only render a specific "Baking" layer (Layer 31)
         }
 
         private void FitCameraToMesh(GameObject obj, float padding = 0.1f)
         {
             MeshFilter mf = obj.GetComponent<MeshFilter>();
-            if (mf == null || mf.sharedMesh == null) return;
+            if (mf == null || mf.sharedMesh == null)
+                return;
 
             // Get the bounds in local space and scale them by the object's scale
             Bounds bounds = mf.sharedMesh.bounds;
@@ -72,7 +146,7 @@ namespace Island
             float width = size.x;
             float depth = size.z;
 
-            // The camera size needs to be half of the largest dimension 
+            // The camera size needs to be half of the largest dimension
             // to fit the object perfectly in a square texture.
             float maxDim = Mathf.Max(width, depth);
 
@@ -80,28 +154,50 @@ namespace Island
 
             // Center the camera over the mesh bounds
             Vector3 center = obj.transform.TransformPoint(bounds.center);
-            bakeCamera.transform.position = new Vector3(center.x, center.y + 100f, center.z);
+            bakeCamera.transform.position =
+                new Vector3(center.x, center.y + 100f, center.z);
+        }
+
+        private RenderTexture TmpTex(TmpTexType type)
+        {
+            return _tmpTex[(int)type].texture;
+        }
+
+        private void MapShaderParameters()
+        {
+
+            _tmpTex.ForEach(t => PostProcessMat.SetTexture(t.reference, t.texture));
+            PostProcessMat.SetTexture("_GrassPattern", grassPattern);
+
+            PostProcessMat.SetColor("_SandA", sandColorA);
+            PostProcessMat.SetColor("_SandB", sandColorB);
+            PostProcessMat.SetColor("_GrassA", grassColorA);
+            PostProcessMat.SetColor("_GrassB", grassColorB);
+            PostProcessMat.SetColor("_TownA", townColorA);
+            PostProcessMat.SetColor("_TownB", townColorB);
+
+            PostProcessMat.SetFloat("_GrassPatternSize", grassPatternSize);
+            PostProcessMat.SetFloat("_Blur", transitionBlur);
+            PostProcessMat.SetFloat("_NoiseAmt", transitionNoiseAmount);
+            PostProcessMat.SetFloat("_NoiseScale", transitionNoiseScale);
         }
 
         private Texture2D BakeGround(GameObject groundObj)
         {
-
+            return Texture2D.whiteTexture;
         }
 
-        private Texture2D BakeTowns(GameObject groundObj) {
-
-	}
+        private Texture2D BakeTowns(GameObject groundObj)
+        {
+            return Texture2D.whiteTexture;
+        }
 
         public Texture2D Bake(GameObject groundObj)
         {
 
             FitCameraToMesh(groundObj, 0.0f);
 
-            int downRes = Resolution / 8;
-            RenderTexture rtBase = RenderTexture.GetTemporary(Resolution, Resolution, 24);
-            RenderTexture rtGrassBegin = RenderTexture.GetTemporary(downRes, downRes, 24); // Divide by 2 so get blurry result
-            RenderTexture rtGrassEnd = RenderTexture.GetTemporary(downRes, downRes, 24);
-            RenderTexture finalRT = RenderTexture.GetTemporary(Resolution, Resolution, 0);
+            _tmpTex.ForEach(t => t.texture = RenderTexture.GetTemporary(t.resolution, t.resolution, t.format));
 
             // Store original state
             int originalLayer = groundObj.layer;
@@ -110,24 +206,33 @@ namespace Island
             Mesh originalMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
 
             groundObj.layer = LAYER_ID;
-            //groundObj.transform.position = bakeCamera.transform.position + Vector3.down * 10;
+            // groundObj.transform.position = bakeCamera.transform.position +
+            // Vector3.down * 10;
 
             {
                 // Step 1: Print Outer Layer (Sand/Full Shape)
-                bakeCamera.targetTexture = rtBase;
+                bakeCamera.targetTexture = TmpTex(TmpTexType.SandMask);
                 // Use an unlit white material temporarily to get a clean mask
                 groundObj.GetComponent<Renderer>().sharedMaterial = WhiteMat;
                 bakeCamera.Render();
             }
 
-
             // Step 2: Shrink and Print Inner Layer
             {
 
-                List<ShrinkPass> shrinkPasses = new List<ShrinkPass>(){
-            new ShrinkPass(){Value = grassBeginDistance, Texture = rtGrassBegin},
-            new ShrinkPass(){Value = grassEndDistance, Texture = rtGrassEnd}
-        };
+                List<ShrinkPass> shrinkPasses = new List<ShrinkPass>()
+        {
+        new ShrinkPass()
+        {
+        Value = grassBeginDistance,
+        Texture = TmpTex(TmpTexType.GrassMaskBegin)
+        },
+        new ShrinkPass()
+        {
+        Value = grassEndDistance,
+        Texture = TmpTex(TmpTexType.GrassMaskEnd)
+        }
+    };
                 Mesh shrunkMesh = Utils.MeshUtils.Clone(originalMesh);
                 foreach (var pass in shrinkPasses)
                 {
@@ -139,44 +244,29 @@ namespace Island
                 }
             }
 
-            {
-                // Step 3: Post Process (Combine, Noise, Blur)
-                PostProcessMat.SetTexture("_SandMask", rtBase);
-                PostProcessMat.SetTexture("_GrassBegin", rtGrassBegin);
-                PostProcessMat.SetTexture("_GrassEnd", rtGrassEnd);
-                PostProcessMat.SetTexture("_GrassPattern", grassPattern);
-                PostProcessMat.SetFloat("_GrassPatternSize", grassPatternSize);
-                PostProcessMat.SetColor("_SandA", sandColorA);
-                PostProcessMat.SetColor("_SandB", sandColorB);
-                PostProcessMat.SetColor("_GrassA", grassColorA);
-                PostProcessMat.SetColor("_GrassB", grassColorB);
-                PostProcessMat.SetFloat("_Blur", transitionBlur);
-                PostProcessMat.SetFloat("_NoiseAmt", transitionNoiseAmount);
-                PostProcessMat.SetFloat("_NoiseScale", transitionNoiseScale);
-                Graphics.Blit(rtBase, finalRT, PostProcessMat);
-            }
+            MapShaderParameters();
+            Graphics.Blit(TmpTex(TmpTexType.SandMask), TmpTex(TmpTexType.FinalTexture), PostProcessMat);
 
             // Convert RT to Texture2D
-            Texture2D output = new Texture2D(Resolution, Resolution, TextureFormat.RGB24, false);
-            RenderTexture.active = finalRT;
+            Texture2D output =
+                new Texture2D(Resolution, Resolution, TextureFormat.RGB24, false);
+            RenderTexture.active = TmpTex(TmpTexType.FinalTexture);
             output.ReadPixels(new Rect(0, 0, Resolution, Resolution), 0, 0);
             output.Apply();
 
 
-            // Cleanup
-            groundObj.layer = originalLayer;
-            //groundObj.transform.position = originalPos;
-            groundObj.GetComponent<MeshFilter>().sharedMesh = originalMesh;
-            groundObj.GetComponent<Renderer>().sharedMaterial = originalMat;
-            RenderTexture.ReleaseTemporary(rtBase);
-            RenderTexture.ReleaseTemporary(rtGrassBegin);
-            RenderTexture.ReleaseTemporary(rtGrassEnd);
-            RenderTexture.ReleaseTemporary(finalRT);
+
+            {
+                // Cleanup
+                groundObj.layer = originalLayer;
+                // groundObj.transform.position = originalPos;
+                groundObj.GetComponent<MeshFilter>().sharedMesh = originalMesh;
+                groundObj.GetComponent<Renderer>().sharedMaterial = originalMat;
+                _tmpTex.ForEach(t => RenderTexture.ReleaseTemporary(t.texture));
+            }
 
             return output;
         }
-
-
     }
 
 }
