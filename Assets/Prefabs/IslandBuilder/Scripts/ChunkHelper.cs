@@ -48,7 +48,6 @@ public class ChunkHelper : MonoBehaviour
 
     private void UpdateVisuals(bool isHovering)
     {
-	Debug.Log("Active: "+ isActive);
         // Prepare values based on your requirements:
         // Active: 1 or 0
         // Opacity: 1 (Hover) or 0.5 (Default)

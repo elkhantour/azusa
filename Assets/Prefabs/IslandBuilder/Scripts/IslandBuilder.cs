@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+using Utils;
+using Triangulation;
 
 namespace Island
 {
@@ -12,21 +15,33 @@ namespace Island
         [SerializeField] private float minRadius = 1f;
         [SerializeField] private float maxRadius = 10f;
         [SerializeField] private float scrollSensitivity = 1f;
+        [SerializeField] private float radiusPadding = 0f;
 
         [Header("Controls")]
         [SerializeField] private KeyCode spawnKey = KeyCode.P;
+        [SerializeField] private KeyCode outlineKey = KeyCode.L;
         [SerializeField] private KeyCode deleteKey = KeyCode.Delete;
 
-        private List<GameObject> spawnedChunks = new List<GameObject>();
-        private GameObject currentActiveChunk;
-        private bool isPlacingNew = false;
-        private bool isMovingExisting = false;
+        private List<GameObject> _spawnedChunks = new List<GameObject>();
+        private GameObject _currentActiveChunk;
+        private GameObject _outline;
+        private bool _isPlacingNew = false;
+        private bool _isMovingExisting = false;
+
+        void Awake()
+        {
+
+            _outline = new GameObject("IslandOutline");
+            _outline.AddComponent<MeshFilter>();
+            _outline.AddComponent<MeshRenderer>();
+
+        }
 
         void Update()
         {
             HandleInput();
 
-            if (isPlacingNew || isMovingExisting)
+            if (_isPlacingNew || _isMovingExisting)
             {
                 UpdateChunkPosition();
                 UpdateChunkRadius();
@@ -38,12 +53,22 @@ namespace Island
             }
         }
 
+        private void CameraLock()
+        {
+            CameraManager.Instance.SetMode(CameraModeType.Locked);
+        }
+
+        private void CameraUnlock()
+        {
+            CameraManager.Instance.SetMode(CameraModeType.Orbit);
+        }
+
         private void HandleInput()
         {
             // Spawn new chunk
-            if (Input.GetKeyDown(spawnKey) && !isPlacingNew && !isMovingExisting)
+            if (Input.GetKeyDown(spawnKey) && !_isPlacingNew && !_isMovingExisting)
             {
-                if (spawnedChunks.Count < maxChunks)
+                if (_spawnedChunks.Count < maxChunks)
                 {
                     SpawnNewChunk();
                 }
@@ -54,17 +79,78 @@ namespace Island
             }
 
             // Delete selected chunk
-            if (Input.GetKeyDown(deleteKey) && isMovingExisting && currentActiveChunk != null)
+            if (Input.GetKeyDown(deleteKey) && _isMovingExisting && _currentActiveChunk != null)
             {
                 DeleteCurrentChunk();
             }
+
+            if (Input.GetKeyDown(outlineKey) && _currentActiveChunk == null)
+            {
+                Outline();
+            }
+        }
+
+        /// <summary>
+        /// Calculates a 2D Rect encompassing a list of circles (position + radius).
+        /// This is the most accurate way to define the Marching Squares grid area.
+        /// </summary>
+        public static Rect GetBoundFromCircles(List<RadialMask> circles, float padding = 5f)
+        {
+            if (circles == null || circles.Count == 0) return new Rect(0, 0, 0, 0);
+
+            float minX = float.MaxValue;
+            float minZ = float.MaxValue;
+            float maxX = float.MinValue;
+            float maxZ = float.MinValue;
+
+            foreach (var circle in circles)
+            {
+                // We expand the bounds by the radius in all four directions
+                minX = Mathf.Min(minX, circle.Position.x - circle.Radius);
+                maxX = Mathf.Max(maxX, circle.Position.x + circle.Radius);
+                minZ = Mathf.Min(minZ, circle.Position.z - circle.Radius);
+                maxZ = Mathf.Max(maxZ, circle.Position.z + circle.Radius);
+            }
+
+            return new Rect(
+                minX - padding,
+                minZ - padding,
+                (maxX - minX) + (padding * 2),
+                (maxZ - minZ) + (padding * 2)
+            );
+        }
+
+
+        private void Outline()
+        {
+
+            // Map chunks into radial mask for square marching
+            var circles = _spawnedChunks.Select(m => new RadialMask()
+            {
+                Position = m.transform.position,
+                Radius = (m.transform.localScale.x / 2.0f) - radiusPadding,
+            }).ToList();
+
+            // Define the area to scan
+            Rect bounds = GetBoundFromCircles(circles);
+
+            // Generate
+            var generator = new MarchingSquaresOutline(gridSize: 0.5f);
+            Mesh outlineMesh = generator.GenerateOutline(circles, bounds);
+
+            List<Vector3> verticesPos = new List<Vector3>();
+            outlineMesh.GetVertices(verticesPos);
+            Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(verticesPos.ToArray()));
+
+            _outline.GetComponent<MeshFilter>().mesh = triangulator.Mesh;
         }
 
         private void SpawnNewChunk()
         {
-            currentActiveChunk = Instantiate(chunkPrefab);
-            isPlacingNew = true;
-            currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
+            _currentActiveChunk = Instantiate(chunkPrefab);
+            _isPlacingNew = true;
+            _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
+            CameraLock();
         }
 
         private void UpdateChunkPosition()
@@ -76,7 +162,7 @@ namespace Island
             if (groundPlane.Raycast(ray, out float enter))
             {
                 Vector3 hitPoint = ray.GetPoint(enter);
-                currentActiveChunk.transform.position = new Vector3(hitPoint.x, 0, hitPoint.z);
+                _currentActiveChunk.transform.position = new Vector3(hitPoint.x, 0, hitPoint.z);
             }
         }
 
@@ -86,9 +172,9 @@ namespace Island
             if (Mathf.Abs(scroll) > 0.01f)
             {
                 // Assuming the "radius" is represented by the localScale of the helper
-                Vector3 scale = currentActiveChunk.transform.localScale;
+                Vector3 scale = _currentActiveChunk.transform.localScale;
                 float newRadius = Mathf.Clamp(scale.x + (scroll * scrollSensitivity), minRadius, maxRadius);
-                currentActiveChunk.transform.localScale = new Vector3(newRadius, scale.y, newRadius);
+                _currentActiveChunk.transform.localScale = new Vector3(newRadius, scale.y, newRadius);
             }
         }
 
@@ -97,16 +183,18 @@ namespace Island
             // On click, drop the chunk and return to idle state
             if (Input.GetMouseButtonDown(0))
             {
-                if (isPlacingNew)
+                if (_isPlacingNew)
                 {
-                    spawnedChunks.Add(currentActiveChunk);
+                    _spawnedChunks.Add(_currentActiveChunk);
                 }
 
-                isPlacingNew = false;
-                isMovingExisting = false;
+                _isPlacingNew = false;
+                _isMovingExisting = false;
 
-                currentActiveChunk.GetComponent<ChunkHelper>().SetActive(false);
-                currentActiveChunk = null;
+                _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(false);
+                _currentActiveChunk = null;
+
+                CameraUnlock();
             }
         }
 
@@ -118,11 +206,11 @@ namespace Island
                 if (Physics.Raycast(ray, out RaycastHit hit))
                 {
                     // Check if we hit one of our chunks
-                    if (spawnedChunks.Contains(hit.collider.gameObject))
+                    if (_spawnedChunks.Contains(hit.collider.gameObject))
                     {
-                        currentActiveChunk = hit.collider.gameObject;
-                        currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
-                        isMovingExisting = true;
+                        _currentActiveChunk = hit.collider.gameObject;
+                        _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
+                        _isMovingExisting = true;
                     }
                 }
             }
@@ -130,11 +218,11 @@ namespace Island
 
         private void DeleteCurrentChunk()
         {
-            spawnedChunks.Remove(currentActiveChunk);
-            Destroy(currentActiveChunk);
-            currentActiveChunk = null;
-            isMovingExisting = false;
-            isPlacingNew = false;
+            _spawnedChunks.Remove(_currentActiveChunk);
+            Destroy(_currentActiveChunk);
+            _currentActiveChunk = null;
+            _isMovingExisting = false;
+            _isPlacingNew = false;
         }
     }
 

@@ -42,7 +42,10 @@ namespace Triangulation
             Mesh = new Mesh();
             Mesh.vertices = GenerateVertices();
             Mesh.triangles = GenerateTriangles(CleanTriangleMethod.Raycast);
-
+	    Mesh.RecalculateBounds();
+	    Mesh.RecalculateNormals();
+	    Mesh.RecalculateTangents();
+	    
             Vertices = Mesh.vertices;
             Triangles = Mesh.triangles;
 

@@ -3,9 +3,10 @@ using UnityEngine;
 
 public enum CameraState
 {
-    REST,
-    ROTATE,
-    MOVE
+    Rest,
+    Rotate,
+    Move,
+    Locked,
 }
 
 

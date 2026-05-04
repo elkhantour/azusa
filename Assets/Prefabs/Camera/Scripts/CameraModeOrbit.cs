@@ -55,11 +55,11 @@ public class CameraModeOrbit : CameraMode
         // Check for right mouse button input
         if (Input.GetMouseButtonDown(1))
         {
-            state = CameraState.ROTATE;
+            state = CameraState.Rotate;
         }
         else if (Input.GetMouseButtonUp(1))
         {
-            state = CameraState.REST;
+            state = CameraState.Rest;
         }
     }
 
@@ -120,7 +120,7 @@ public class CameraModeOrbit : CameraMode
     private void Orbit()
     {
         //means damping is over and no click down
-        if (lastAngle == transform.rotation.y && state == CameraState.REST)
+        if (lastAngle == transform.rotation.y && state == CameraState.Rest)
         {
             mouseX = 0.0f;
 
@@ -132,7 +132,7 @@ public class CameraModeOrbit : CameraMode
             }
         }
 
-        if (state == CameraState.ROTATE)
+        if (state == CameraState.Rotate)
         {
             // Cast a ray from the camera to the floor
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

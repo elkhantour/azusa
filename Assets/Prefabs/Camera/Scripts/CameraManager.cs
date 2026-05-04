@@ -3,7 +3,8 @@ using UnityEngine;
 public enum CameraModeType
 {
     Orbit,
-    TopDown
+    TopDown,
+    Locked,
 }
 
 
@@ -25,6 +26,7 @@ public class CameraManager : MonoBehaviour
 
     [SerializeField] private CameraModeOrbit orbitMode;
     [SerializeField] private CameraModeTopDown topDownMode;
+    private CameraModeLocked lockedMode = new CameraModeLocked();
 
     private CameraMode currentMode;
 
@@ -45,12 +47,16 @@ public class CameraManager : MonoBehaviour
             case CameraModeType.TopDown:
                 currentMode = topDownMode;
                 break;
+
+            case CameraModeType.Locked:
+                currentMode = lockedMode;
+                break;
         }
     }
 
     private void LateUpdate()
     {
-	currentMode.Tick();
+        currentMode.Tick();
 
     }
 
