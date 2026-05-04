@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using DelaunatorSharp;
-using Utils;
+using System.Linq;
+using Island;
 
 /*
  Execute a Delaunay Triangulation
@@ -42,10 +43,10 @@ namespace Triangulation
             Mesh = new Mesh();
             Mesh.vertices = GenerateVertices();
             Mesh.triangles = GenerateTriangles(CleanTriangleMethod.Raycast);
-	    Mesh.RecalculateBounds();
-	    Mesh.RecalculateNormals();
-	    Mesh.RecalculateTangents();
-	    
+            Mesh.RecalculateBounds();
+            Mesh.RecalculateNormals();
+            Mesh.RecalculateTangents();
+
             Vertices = Mesh.vertices;
             Triangles = Mesh.triangles;
 
@@ -250,6 +251,96 @@ namespace Triangulation
             // If they are not collinear, they must intersect in exactly one point.
             return true;
         }
+
+
+
+
+
+
+
+        /// <summary>
+        /// Generates a triangle array (indices) for a given set of 2D points using Delaunay triangulation.
+        /// </summary>
+        public static int[] Triangulate(Vector2[] points)
+        {
+            if (points == null || points.Length < 3)
+            {
+                Debug.LogWarning("Triangulator: At least 3 points are required for triangulation.");
+                return new int[0];
+            }
+
+            // Convert Unity Vector2 to Delaunator IPoint
+            IPoint[] delaunatorPoints = points.Select(p => new DelaunatorSharp.Point(p.x, p.y)).Cast<IPoint>().ToArray();
+
+            // Perform triangulation
+            var delaunay = new Delaunator(delaunatorPoints);
+
+            // DelaunatorSharp returns indices in its Triangles array
+            return delaunay.Triangles;
+        }
+
+        /// <summary>
+        /// Overload for Vector3 points (e.g. from GetVerticesAttributes), ignoring the Y axis.
+        /// </summary>
+        public static int[] Triangulate(Vector3[] points)
+        {
+            Vector2[] points2D = points.Select(p => new Vector2(p.x, p.z)).ToArray();
+            return Triangulate(points2D);
+        }
+
+
+        /// <summary>
+        /// Filters a raw triangle array by removing triangles whose centroid is outside the provided circle constraints.
+        /// This is used to fix "bridging" issues in blobby, non-convex shapes.
+        /// </summary>
+        public static int[] RemoveOuterRingTriangles(int[] triangles, Vector3[] points, List<RadialMask> constraints)
+        {
+            if (triangles == null || points == null || constraints == null) return triangles;
+
+            List<int> filteredTriangles = new List<int>();
+
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                int i1 = triangles[i];
+                int i2 = triangles[i + 1];
+                int i3 = triangles[i + 2];
+
+                // Calculate Centroid
+                Vector3 v1 = points[i1];
+                Vector3 v2 = points[i2];
+                Vector3 v3 = points[i3];
+                Vector3 centroid = (v1 + v2 + v3) / 3.0f;
+
+                // Only keep if inside at least one circle
+                if (IsPointInAnyCircle(centroid, constraints))
+                {
+                    filteredTriangles.Add(i1);
+                    filteredTriangles.Add(i2);
+                    filteredTriangles.Add(i3);
+                }
+            }
+
+            return filteredTriangles.ToArray();
+        }
+
+        private static bool IsPointInAnyCircle(Vector3 point, List<RadialMask> circles)
+        {
+            foreach (var circle in circles)
+            {
+                float dx = point.x - circle.Position.x;
+                float dz = point.z - circle.Position.z;
+                float distSq = (dx * dx) + (dz * dz);
+
+                float radiusWithEpsilon = circle.Radius + 0.1f;
+                if (distSq <= (radiusWithEpsilon * radiusWithEpsilon))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
 
     }
 

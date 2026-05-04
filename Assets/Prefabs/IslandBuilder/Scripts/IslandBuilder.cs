@@ -125,7 +125,7 @@ namespace Island
         {
 
             // Map chunks into radial mask for square marching
-            var circles = _spawnedChunks.Select(m => new RadialMask()
+            List<RadialMask> circles = _spawnedChunks.Select(m => new RadialMask()
             {
                 Position = m.transform.position,
                 Radius = (m.transform.localScale.x / 2.0f) - radiusPadding,
@@ -142,7 +142,11 @@ namespace Island
             outlineMesh.GetVertices(verticesPos);
             Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(verticesPos.ToArray()));
 
-            _outline.GetComponent<MeshFilter>().mesh = triangulator.Mesh;
+            int[] triangles = Triangulator.Triangulate(verticesPos.ToArray());
+            triangles = Triangulator.RemoveOuterRingTriangles(triangles, verticesPos.ToArray(), circles);
+            outlineMesh.SetTriangles(triangles, 0);
+	    
+            _outline.GetComponent<MeshFilter>().mesh = outlineMesh;
         }
 
         private void SpawnNewChunk()
