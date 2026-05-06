@@ -9,16 +9,8 @@ namespace Island
     public class IslandTerrain : MonoBehaviour
     {
 
-        public class ChunkCollider
-        {
-            public Chunk Chunk { get; set; }
-            public GameObject Collider { get; set; }
-        }
-
         //Mesh
-        public List<ChunkCollider> ChunkColliders = new List<ChunkCollider>();
         private List<GameObject> Parts = new List<GameObject>();
-        private const string CHUNK_COLLIDER_NAME = "ChunkCollider";
         private Mesh Mesh;
 
         [Header("Island Configuration")]
@@ -27,18 +19,14 @@ namespace Island
         public Material RockMaterial;
         public GroundTextureBaker GroundTextureBaker;
 
-        public void Init()
+        public void Init() { }
+
+	// DELETEME ?
+        public void GenerateDebugChunk()
         {
-
-            //Inheritance from Draggable
-            Draggable draggable = gameObject.GetComponent<Draggable>();
-            draggable.HitNameFilter = CHUNK_COLLIDER_NAME;
-
             Chunk baseChunk = new Chunk();
             baseChunk.Radius = Size;
             baseChunk.Generate();
-
-            //UpdateBounds();
 
             // Create Gameobject and filter for each island parts
             // TODO: investigate why c# doesn't like [(int)ChunkPart.Ground] = ...
@@ -61,7 +49,6 @@ namespace Island
                 // cache the gameobjects for future retrieval
                 Parts.Add(part);
             }
-
         }
 
         public void BakeTexture(List<RadialMask> townMasks = null)
@@ -71,54 +58,6 @@ namespace Island
             Texture2D texture = GroundTextureBaker.Bake(ground, townMasks);
             MeshRenderer groundRenderer = ground.GetComponent<MeshRenderer>();
             groundRenderer.material.SetTexture("_BaseMap", texture);
-
-        }
-
-        public void UpdateMesh()
-        {
-
-            //Generate Base Chunk
-            if (ChunkColliders.Count == 0)
-            {
-                Chunk baseChunk = new Chunk();
-                baseChunk.Radius = Size;
-                baseChunk.Generate();
-
-                //Mesh chunkMesh = baseChunk.Mesh;
-                //Add to chunk cache list
-                //ChunkColliders.Add(new ChunkCollider() { Chunk = baseChunk });
-                //return chunkMesh;
-            }
-
-            //Assign Solo Chunk
-            if (ChunkColliders.Count == 1)
-            {
-                //return ChunkColliders[0].Chunk.Mesh;
-            }
-
-            //Merge chunks
-            foreach (ChunkCollider chunkCollider in ChunkColliders)
-            {
-
-            }
-
-            // return Mesh;
-        }
-
-        private void UpdateBounds()
-        {
-            //Add Collider as Children as Unity can by default only handle 1 collider / gameobjects
-            foreach (ChunkCollider chunkCollider in ChunkColliders)
-            {
-                GameObject collider = new GameObject(CHUNK_COLLIDER_NAME);
-                collider.transform.parent = this.gameObject.transform;
-                collider.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(Vector3.zero));
-                BoxCollider boxCollider = collider.AddComponent<BoxCollider>();
-                boxCollider.center = chunkCollider.Chunk.Bounds.center;
-                boxCollider.size = chunkCollider.Chunk.Bounds.size;
-
-                chunkCollider.Collider = collider;
-            }
         }
 
         public GameObject GetGround()

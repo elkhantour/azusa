@@ -30,9 +30,7 @@ namespace Island
         [Header("Island")]
         [SerializeField] private RootProperty Belt;
         [SerializeField] private RootProperty Bottom;
-        [SerializeField] private Material groundMaterial;
-        [SerializeField] private Material rootMaterial;
-
+	
         [Header("Controls")]
         [SerializeField] private KeyCode spawnKey = KeyCode.P;
         [SerializeField] private KeyCode outlineKey = KeyCode.L;
@@ -44,32 +42,23 @@ namespace Island
         private bool _isPlacingNew = false;
         private bool _isMovingExisting = false;
 
-        // Game Objects cache
-        private struct GameObjectCache
-        {
-            public GameObject Island;
-            public GameObject Ground;
-            public GameObject Root;
-        }
+        [SerializeField] private Island islandPrefab;
+        private Island _island;
 
-        private GameObjectCache _go;
-
-        // Inner mesh parts cache
-        private struct MeshCache
+        // Inner mesh parts cache, used during the noise process
+        private struct RootParts
         {
-            public Mesh Ground;
-            public Mesh RootTop;
-            public Mesh RootBottom;
-            public Mesh RootCap;
+            public Mesh Top;    // Root Top Part
+            public Mesh Bottom; // Root Bottom Part
+            public Mesh Cap;    // Root Cap Part
         };
 
-        private MeshCache _meshes;
+        private RootParts _rootParts;
 
         void Awake()
         {
-            _go.Island = new GameObject("Island");
-            _go.Ground = CreateGameObject("Ground", groundMaterial, _go.Island);
-            _go.Root = CreateGameObject("Root", rootMaterial, _go.Island);
+            _island = Instantiate(islandPrefab);
+	    _island.Init();
         }
 
         void Update()
@@ -99,9 +88,10 @@ namespace Island
                 rd.material = material;
             }
 
-	    if(parent){
-		go.transform.SetParent(parent.transform);
-	    }
+            if (parent)
+            {
+                go.transform.SetParent(parent.transform);
+            }
 
             return go;
         }
@@ -141,9 +131,10 @@ namespace Island
             if (Input.GetKeyDown(outlineKey) && _currentActiveChunk == null)
             {
                 GenerateGround();
-                GenerateRoot(_meshes.Ground);
+                GenerateRoot(_island.GetGroundMesh());
                 Noise();
                 CombineRoot();
+		_island.BakeTexture();
             }
         }
 
@@ -174,14 +165,15 @@ namespace Island
 
             // Generate
             var generator = new MarchingSquaresOutline(gridSize: 0.5f);
-            _meshes.Ground = generator.GenerateOutline(_circlesMask, bounds);
-            _meshes.Ground = MeshUtils.RemoveDuplicateVertices(_meshes.Ground);
-            MeshUtils.RewindLoop(_meshes.Ground);
+            Mesh outlined = generator.GenerateOutline(_circlesMask, bounds);
+            outlined = MeshUtils.RemoveDuplicateVertices(outlined);
 
-            Triangulate(_meshes.Ground, _circlesMask);
-            _meshes.Ground.SetUVs(0, Uv.Planar(_meshes.Ground.vertices));
+            MeshUtils.RewindLoop(outlined);
 
-            _go.Ground.GetComponent<MeshFilter>().mesh = _meshes.Ground;
+            Triangulate(outlined, _circlesMask);
+            outlined.SetUVs(0, Uv.Planar(outlined.vertices));
+
+            _island.SetGroundMesh(outlined);
         }
 
         /// <summary>
@@ -194,23 +186,22 @@ namespace Island
         /// <returns>The final root mesh.</returns>
         private void GenerateRoot(Mesh baseMesh)
         {
-
             // 1. Offset and shrink the root strates (belt, bootom)
             Mesh topLoop = MeshUtils.Clone(baseMesh);
             // topLoop = MeshUtils.Decimate(topLoop, 1.0f);
             Shrink(topLoop, _circlesMask, 3 * Belt.Shrink);
             MeshUtils.OffsetVertices(topLoop, new Vector3(0, -Belt.Depth, 0));
 
-            _meshes.RootCap = MeshUtils.Clone(baseMesh);
-            // _meshes.RootCap = MeshUtils.Decimate(topLoop, 1.3f);
-            Shrink(_meshes.RootCap, _circlesMask, 3 * Bottom.Shrink);
-            MeshUtils.OffsetVertices(_meshes.RootCap, new Vector3(0, -Bottom.Depth, 0));
+            _rootParts.Cap = MeshUtils.Clone(baseMesh);
+            // _rootParts.Cap = MeshUtils.Decimate(topLoop, 1.3f);
+            Shrink(_rootParts.Cap, _circlesMask, 3 * Bottom.Shrink);
+            MeshUtils.OffsetVertices(_rootParts.Cap, new Vector3(0, -Bottom.Depth, 0));
 
             // 2. Bridges the parts together
-            _meshes.RootTop = MeshBridge.CreateBridgeByProximity(baseMesh.vertices, topLoop.vertices);
-            _meshes.RootBottom = MeshBridge.CreateBridgeByProximity(topLoop.vertices, _meshes.RootCap.vertices);
+            _rootParts.Top = MeshBridge.CreateBridgeByProximity(baseMesh.vertices, topLoop.vertices);
+            _rootParts.Bottom = MeshBridge.CreateBridgeByProximity(topLoop.vertices, _rootParts.Cap.vertices);
 
-            Normal.Flip(_meshes.RootCap);
+            Normal.Flip(_rootParts.Cap);
         }
 
         // -------------------------------------------------------------------------
@@ -220,20 +211,24 @@ namespace Island
         private void CombineRoot()
         {
             CombineInstance[] combine = new CombineInstance[3];
-            combine[0].mesh = _meshes.RootTop;
-            combine[1].mesh = _meshes.RootBottom;
-            combine[2].mesh = _meshes.RootCap;
+            combine[0].mesh = _rootParts.Top;
+            combine[1].mesh = _rootParts.Bottom;
+            combine[2].mesh = _rootParts.Cap;
 
-            Mesh rootMesh = _go.Root.GetComponent<MeshFilter>().mesh;
+            Mesh combinedMesh = new Mesh();
+            combinedMesh.Clear();
+            combinedMesh.CombineMeshes(combine, true, false);
+            combinedMesh.RecalculateBounds();
+            combinedMesh.RecalculateNormals();
 
-            rootMesh.Clear();
-            rootMesh.CombineMeshes(combine, true, false);
-            rootMesh.RecalculateBounds();
-            rootMesh.RecalculateNormals();
+            _island.SetRootMesh(combinedMesh);
         }
 
         private void Noise()
         {
+
+            Mesh groundMesh = _island.GetGroundMesh();
+            Mesh rootMesh = _island.GetRootMesh();
 
             List<NoiseJob> jobs = new List<NoiseJob>
         {
@@ -251,15 +246,15 @@ namespace Island
             {
             new NoiseItem
             {
-                Mesh = _meshes.Ground,
-                Transform = _go.Ground.transform,
-                Range = (0, _meshes.Ground.vertexCount)
+                Mesh = groundMesh,
+                Transform = _island.Ground.transform,
+                Range = (0, groundMesh.vertexCount)
             },
             new NoiseItem
             {
-                Mesh = _meshes.RootTop,
-                Transform = _go.Root.transform,
-                Range = (0, _meshes.Ground.vertexCount)
+                Mesh = _rootParts.Top,
+                Transform = _island.Root.transform,
+                Range = (0, groundMesh.vertexCount)
             }
             }
         },
@@ -279,15 +274,15 @@ namespace Island
             {
             new NoiseItem
             {
-                Mesh = _meshes.RootTop,
-                Transform = _go.Root.transform,
-                Range = (_meshes.Ground.vertexCount, _meshes.RootTop.vertexCount)
+                Mesh = _rootParts.Top,
+                Transform = _island.Root.transform,
+                Range = (groundMesh.vertexCount, _rootParts.Top.vertexCount)
             },
             new NoiseItem
             {
-                Mesh = _meshes.RootBottom,
-                Transform = _go.Root.transform,
-                Range = (0, _meshes.RootTop.vertexCount - _meshes.Ground.vertexCount)
+                Mesh = _rootParts.Bottom,
+                Transform = _island.Root.transform,
+                Range = (0, _rootParts.Top.vertexCount - groundMesh.vertexCount)
             }
             }
         },
@@ -306,15 +301,15 @@ namespace Island
             {
             new NoiseItem
             {
-                Mesh = _meshes.RootBottom,
-                Transform = _go.Root.transform,
-                Range = (_meshes.RootTop.vertexCount - _meshes.Ground.vertexCount, _meshes.RootBottom.vertexCount)
+                Mesh = _rootParts.Bottom,
+                Transform = _island.Root.transform,
+                Range = (_rootParts.Top.vertexCount - groundMesh.vertexCount, _rootParts.Bottom.vertexCount)
             },
             new NoiseItem
             {
-                Mesh = _meshes.RootCap,
-                Transform = _go.Root.transform,
-                Range = (0, _meshes.RootCap.vertexCount)
+                Mesh = _rootParts.Cap,
+                Transform = _island.Root.transform,
+                Range = (0, _rootParts.Cap.vertexCount)
             }
             }
         }
