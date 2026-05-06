@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.angusj.clipper2": {
+      "version": "https://github.com/JohnCGXIII/clipper2-upm.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "370a7d85ae694194d0b59f204645539ab800d1a7"
+    },
     "com.nol1fe.delaunator": {
       "version": "https://github.com/nol1fe/delaunator-sharp.git?path=DelaunatorSharp.Unity",
       "depth": 0,
@@ -134,9 +141,9 @@
       "depth": 0,
       "source": "registry",
       "dependencies": {
+        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
-        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
       },
       "url": "https://packages.unity.com"

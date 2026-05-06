@@ -30,6 +30,7 @@ namespace Triangulation
 
         private Vector2[] OuterEdges { get; set; }
 
+	// TODO: clean up and make it static
         public Triangulator(Vector2[] initPoints, Vector2[] outerEdges = null)
         {
 
@@ -51,6 +52,8 @@ namespace Triangulation
             Triangles = Mesh.triangles;
 
         }
+
+	
 
         private IPoint[] GeneratePoints(Vector2[] points)
         {

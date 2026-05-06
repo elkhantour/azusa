@@ -2,16 +2,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using Utils;
 
 namespace Utils
 {
-
-    public class Point
-    {
-       public int Index { get; set; }
-       public Vector3 Position { get; set; }
-    }
 
     public class SuperiorPoint : Point
     {
@@ -23,52 +16,28 @@ namespace Utils
         public List<SuperiorPoint> Connections { get; set; }
     }
 
-    public class Edge
-    {
-        public Point Begin { get; set; }
-        public Point End { get; set; }
-    }
-
-
-    public class BridgeLoop
+    public static class BridgeLoop
     {
 
-        public List<Edge> Edges { get; private set; } = new List<Edge>();
-        public List<Point> Segments { get; private set; } = new List<Point>();
-        public List<int> Triangles { get; private set; } = new List<int>();
-        public bool DebugMode { get; set; } = false;
-
-        private Vector3[] OriginPoints { get; set; }
-        private Vector3[] TargetPoints { get; set; }
-        private int SegmentsAmount { get; set; }
-
-        public BridgeLoop(Vector3[] origin, Vector3[] target, int segments = 0)
-        {
-            OriginPoints = origin;
-            TargetPoints = target;
-            SegmentsAmount = segments;
-        }
-
-        private float Distance(Vector3 A, Vector3 B)
+        private static float Distance(Vector3 A, Vector3 B)
         {
             return Mathf.Sqrt(
-                (float) Math.Pow(B.x - A.x, 2)
-                + (float) Math.Pow(B.y - A.y, 2)
-                + (float) Math.Pow(B.z - A.z, 2)
+                (float)Math.Pow(B.x - A.x, 2)
+                + (float)Math.Pow(B.y - A.y, 2)
+                + (float)Math.Pow(B.z - A.z, 2)
                );
         }
 
-
-            private Point ClosestPoint(Vector3 point, Vector3[] target)
+        private static Point ClosestPoint(Vector3 point, Vector3[] target)
         {
 
             int closestIndex = 0;
             Vector3 closestPosition = Vector3.zero;
 
-            for(int i = 0; i < target.Length; i++)
+            for (int i = 0; i < target.Length; i++)
             {
 
-                if(closestPosition == Vector3.zero
+                if (closestPosition == Vector3.zero
                     || Distance(point, target[i]) < Distance(point, closestPosition))
                 {
                     closestIndex = i;
@@ -85,17 +54,17 @@ namespace Utils
         }
 
 
-        private Mesh Segment(Mesh mesh)
+        private static Mesh Segment(Mesh mesh, List<Edge> edges, int segmentAmount)
         {
 
             List<Vector3> segmentsVertices = mesh.vertices.ToList();
 
-            for (int s = 0; s < SegmentsAmount; s++)
+            for (int s = 0; s < segmentAmount; s++)
             {
                 //place points every 1/segments amount
-                foreach (Edge edge in Edges)
+                foreach (Edge edge in edges)
                 {
-                    segmentsVertices.Add( edge.Begin.Position + s/SegmentsAmount * (edge.End.Position - edge.Begin.Position) );
+                    segmentsVertices.Add(edge.Begin.Position + s / segmentAmount * (edge.End.Position - edge.Begin.Position));
                 }
 
             }
@@ -106,39 +75,35 @@ namespace Utils
 
 
 
-        public Mesh Connect()
+        public static Mesh Connect(Vector3[] origin, Vector3[] target, int segments = 0, bool debug = false)
         {
             Mesh tempMesh = new Mesh();
             List<Vector3> combinedPoints = new List<Vector3>();
+            List<Edge> edges = new List<Edge>();
+            List<int> triangles = new List<int>();
+            //List<Point> segments = new List<Point>();
+
 
             /* 
              * ===================== VERTICES ===================
              * Simply combine origin and target points
              */
 
-            for (int i = 0; i < OriginPoints.Length; i++)
-            {
-                combinedPoints.Add(OriginPoints[i]);
-            }
-
-            for (int j = 0; j < TargetPoints.Length; j++)
-            {
-                combinedPoints.Add(TargetPoints[j]);
-            }
+            combinedPoints.AddRange(origin);
+            combinedPoints.AddRange(target);
 
             //add combined vertices to temporary mesh
             tempMesh.vertices = combinedPoints.ToArray();
 
 
-            if (DebugMode)
+            if (debug)
             {
 
                 Debugger.Polygon(new Polygon()
-                    {
-                        Points = tempMesh.vertices,
-                        Edges = false
-
-                 });
+                {
+                    Points = tempMesh.vertices,
+                    Edges = false
+                });
 
                 for (int i = 0; i < tempMesh.vertices.Length; i++)
                 {
@@ -170,15 +135,15 @@ namespace Utils
             */
 
 
-            Vector3[] superior = OriginPoints.Length > TargetPoints.Length ? OriginPoints : TargetPoints;
-            Vector3[] inferior = OriginPoints.Length > TargetPoints.Length ? TargetPoints : OriginPoints;
+            Vector3[] superior = origin.Length > target.Length ? origin : target;
+            Vector3[] inferior = origin.Length > target.Length ? target : origin;
 
             InferiorPoint[] inferiorPoints = new InferiorPoint[inferior.Length];
 
             /*1. Fill up inferior points array
              * 
              * Note: since we merged our target and origin, the inferior vextices index have been updated,
-             * the inferior index have been added to the superior index, 
+             * the inferior index have been concat to the superior index, 
              * so we need to take this in consideration when assigning the Index value of inferior point
              * that is not anymore "0" but "0 + superior.Length" as instance
              * 
@@ -194,20 +159,19 @@ namespace Utils
                 };
             }
 
-            //2. First pass to connect Supertior --to--> Inferior depending on their proximity (Harmonisation Phase)
-            for(int i = 0; i < superior.Length; i++)
+            //2. First pass to connect Superior --to--> Inferior depending on their proximity (Harmonisation Phase)
+            for (int i = 0; i < superior.Length; i++)
             {
 
-                /*
-                 * Get the closest vertex index for each of our points
-                 * 
-                 *  
-                 *      [0]----[1]----[2]
-                 *        \    /   ___/
-                 *         \  /___/ 
-                 *  [10----[9]----------------------[8]
-                 *  
-                */
+                /* Get the closest vertex index for each of our points
+		 * 
+		 *  
+		 *      [0]----[1]----[2]
+		 *        \    /   ___/
+		 *         \  /___/ 
+		 *  [10----[9]----------------------[8]
+		 *  
+		 */
 
 
                 Point connection = ClosestPoint(superior[i], inferior);
@@ -219,10 +183,12 @@ namespace Utils
                 };
 
 
-                /**
+
+                /*
                  * Increment connection number value in our connection points array
                  * as to later on detect if there are orphans or solo connected
-                 */
+                */
+
 
                 inferiorPoints[connection.Index].Connections.Add(verti);
 
@@ -241,17 +207,18 @@ namespace Utils
              * 
              */
 
-            for(int i = 0; i < inferiorPoints.Length; i++)
+            for (int i = 0; i < inferiorPoints.Length; i++)
             {
                 InferiorPoint currentPoint = inferiorPoints[i];
 
                 if (currentPoint.Connections.Count == 0)
                 {
                     //Retrieve superior closest point
-                    Point closestSuperiorPoint = ClosestPoint(currentPoint.Position, superior );
+                    Point closestSuperiorPoint = ClosestPoint(currentPoint.Position, superior);
 
                     //Add new Superior Point to our Inferior Connection List
-                    currentPoint.Connections.Add( new SuperiorPoint() {
+                    currentPoint.Connections.Add(new SuperiorPoint()
+                    {
                         Index = closestSuperiorPoint.Index,
                         Position = closestSuperiorPoint.Position,
                         Connection = new Point() { Index = currentPoint.Index, Position = currentPoint.Position }
@@ -261,20 +228,20 @@ namespace Utils
             }
 
 
-           /**
-            * 4. Automatically link up Inferior Point to previous latest Cluster Superior (n-1)
-            * 
-            * ]--[3]   [4]---[5]--[6]
-            *   /  \__   
-            *  /      \_   
-            * ]         \      
-            *            [2]
-            */
+            /**
+             * 4. Automatically link up Inferior Point to previous latest Cluster Superior (n-1)
+             * 
+             * ]--[3]   [4]---[5]--[6]
+             *   /  \__   
+             *  /      \_   
+             * ]         \      
+             *            [2]
+             */
 
             for (int i = 0; i < inferiorPoints.Length; i++)
             {
                 InferiorPoint currentPoint = inferiorPoints[i];
-                InferiorPoint previousPoint = inferiorPoints[ i == 0 ? inferiorPoints.Length - 1 : i - 1 ];
+                InferiorPoint previousPoint = inferiorPoints[i == 0 ? inferiorPoints.Length - 1 : i - 1];
 
                 if (i == 1)
                 {
@@ -290,18 +257,19 @@ namespace Utils
                      * The biggest value of half of the length
                      *
                      */
-                   
+
                     SuperiorPoint maxBelowHalfConnection = previousPoint.Connections[0];
-                    foreach(SuperiorPoint sup in previousPoint.Connections)
+                    foreach (SuperiorPoint sup in previousPoint.Connections)
                     {
-        
-                        if(sup.Index < superior.Length / 2)
+
+                        if (sup.Index < superior.Length / 2)
                         {
                             //If current maxBelowHalfConnection Index is above Half, automatically assign this new point that is below half
                             if (maxBelowHalfConnection.Index > superior.Length / 2)
                             {
                                 maxBelowHalfConnection = sup;
-                            }else if( sup.Index > maxBelowHalfConnection.Index) //Else if maxBelowHalf is below half, check which Index is bigger
+                            }
+                            else if (sup.Index > maxBelowHalfConnection.Index) //Else if maxBelowHalf is below half, check which Index is bigger
                             {
                                 maxBelowHalfConnection = sup;
                             }
@@ -311,7 +279,7 @@ namespace Utils
                     //Debug.Log("connect to \t"+maxBelowHalfConnection.Index);
 
                     currentPoint.Connections.Insert(0, maxBelowHalfConnection);
-                  
+
                 }
                 else
                 {
@@ -320,14 +288,14 @@ namespace Utils
 
                 //Debug.Log($"{i} \t [{string.Join(",", currentPoint.Connections.Select(x => x.Index) )}]");
 
-                //Generate Triangles and Edges
+                //Generate triangles and edges
                 for (int c = 0; c < currentPoint.Connections.Count; c++)
                 {
 
                     Point currentConnection = currentPoint.Connections[c];
 
                     //Create edges
-                    Edges.Add(new Edge()
+                    edges.Add(new Edge()
                     {
                         Begin = currentConnection,
                         End = currentPoint
@@ -339,54 +307,54 @@ namespace Utils
                     {
                         Point nextConnection = currentPoint.Connections[c + 1];
                         //Create Triangle
-                        Triangles.Add(currentPoint.Index);
-                        Triangles.Add(currentConnection.Index);
-                        Triangles.Add(nextConnection.Index);
+                        triangles.Add(currentPoint.Index);
+                        triangles.Add(currentConnection.Index);
+                        triangles.Add(nextConnection.Index);
 
-                        if(i == inferiorPoints.Length - 1)
+                        if (i == inferiorPoints.Length - 1)
                         {
                             //Debug.Log(currentPoint.Index);
                         }
                     }
 
 
-                    if (DebugMode)
+                    if (debug)
                     {
 
-                    Debugger.Polygon(new Polygon()
-                    {
-                        Points = new Vector3[]{
+                        Debugger.Polygon(new Polygon()
+                        {
+                            Points = new Vector3[]{
                             currentPoint.Position,
                             currentConnection.Position
                         }
-                    });
+                        });
 
-                    Debugger.Label(new Label()
-                    {
-                        Text = "" + currentConnection.Index,
-                        Position = currentConnection.Position + new Vector3(0, 1, 0)
-                    });
+                        Debugger.Label(new Label()
+                        {
+                            Text = "" + currentConnection.Index,
+                            Position = currentConnection.Position + new Vector3(0, 1, 0)
+                        });
 
 
-                    Debugger.Label(new Label()
-                    {
-                        Text = "" + currentPoint.Index,
-                        Position = currentPoint.Position + new Vector3(0, 1, 0)
-                    });
-                }
+                        Debugger.Label(new Label()
+                        {
+                            Text = "" + currentPoint.Index,
+                            Position = currentPoint.Position + new Vector3(0, 1, 0)
+                        });
+                    }
 
 
 
                 }
 
                 //Generate upward rectangles
-                Triangles.Add(currentPoint.Index);
-                Triangles.Add(previousPoint.Index);
-                Triangles.Add(currentPoint.Connections.First().Index);
+                triangles.Add(currentPoint.Index);
+                triangles.Add(previousPoint.Index);
+                triangles.Add(currentPoint.Connections.First().Index);
 
             }
 
-            tempMesh.triangles = Triangles.ToArray();
+            tempMesh.triangles = triangles.ToArray();
 
 
             //Generate uvs (cylindrical projections
@@ -402,6 +370,128 @@ namespace Utils
 
             return tempMesh;
         }
+
+
+
+
+        /*
+
+
+
+
+
+
+
+
+
+
+         */
+
+
+        /// <summary>
+        /// Bridges two Vector3 loops into a Unity Mesh.
+        /// Both loops are treated as closed rings (last vertex connects back to first).
+        /// If the loops have different vertex counts, the smaller loop is resampled
+        /// proportionally to match the larger one.
+        /// </summary>
+        /// <param name="loopA">First edge loop (e.g. the "bottom" ring).</param>
+        /// <param name="loopB">Second edge loop (e.g. the "top" ring).</param>
+        /// <param name="flipNormals">Flip triangle winding (normals face inward) if true.</param>
+        /// <returns>A Unity Mesh spanning the two loops.</returns>
+        public static Mesh CreateBridge(Vector3[] loopA, Vector3[] loopB, bool flipNormals = false)
+        {
+            int countA = loopA.Length;
+            int countB = loopB.Length;
+
+            // Vertices: both loops concatenated as-is, no resampling
+            Vector3[] vertices = new Vector3[countA + countB];
+            Vector2[] uvs = new Vector2[countA + countB];
+
+            for (int i = 0; i < countA; i++)
+            {
+                vertices[i] = loopA[i];
+                uvs[i] = new Vector2((float)i / countA, 0f);
+            }
+            for (int i = 0; i < countB; i++)
+            {
+                vertices[countA + i] = loopB[i];
+                uvs[countA + i] = new Vector2((float)i / countB, 1f);
+            }
+
+            // Proportional stepping (Bresenham-style)
+            List<int> tris = new List<int>();
+            int a = 0, b = 0;
+            // Accumulator: tracks which loop is "more overdue" for its next vertex
+            while (a < countA || b < countB)
+            {
+
+                int a0 = a % countA, a1 = (a + 1) % countA;
+                int b0 = countA + b % countB, b1 = countA + (b + 1) % countB;
+
+
+                // Determine which loop is "behind" proportionally
+                // Scaled comparison: (a / countA) vs (b / countB)
+                // → cross-multiply to stay in integers: a * countB vs b * countA
+                int lhs = a * countB;
+                int rhs = b * countA;
+
+                if (lhs == rhs) // perfectly in sync → quad
+                {
+                    EmitQuad(tris, a0, b0, a1, b1, flipNormals);
+                    a++; b++;
+                }
+                else if (lhs > rhs) // B is behind → triangle advancing B
+                {
+                    EmitTri(tris, b0, a0, b1, flipNormals);
+                    b++;
+                }
+                else // A is behind → triangle advancing A
+                {
+                    EmitTri(tris, a0, b0, a1, flipNormals);
+                    a++;
+                }
+            }
+
+            Mesh mesh = new Mesh();
+            mesh.name = "BridgedLoop";
+            mesh.indexFormat = (vertices.Length > 65535)
+                ? UnityEngine.Rendering.IndexFormat.UInt32
+                : UnityEngine.Rendering.IndexFormat.UInt16;
+            mesh.vertices = vertices;
+            mesh.uv = uvs;
+            mesh.triangles = tris.ToArray();
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static void EmitQuad(List<int> tris, int a0, int b0, int a1, int b1, bool flip)
+        {
+            if (!flip)
+            {
+                tris.Add(a0); tris.Add(b0); tris.Add(a1);
+                tris.Add(a1); tris.Add(b0); tris.Add(b1);
+            }
+            else
+            {
+                tris.Add(a0); tris.Add(a1); tris.Add(b0);
+                tris.Add(a1); tris.Add(b1); tris.Add(b0);
+            }
+        }
+
+        private static void EmitTri(List<int> tris, int a0, int b0, int x1, bool flip)
+        {
+            if (!flip)
+            {
+                tris.Add(a0); tris.Add(b0); tris.Add(x1);
+            }
+            else
+            {
+                tris.Add(a0); tris.Add(x1); tris.Add(b0);
+            }
+        }
+
+
 
     }
 

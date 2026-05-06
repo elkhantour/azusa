@@ -213,17 +213,15 @@ namespace Island
 
         private Vector2[] GenerateShrinkCircles(Vector2[] pts, float distance)
         {
-
             Mesh tempMesh = new Mesh();
             Vector3[] vertices = MeshUtils.ToVector3(pts);
 
             tempMesh.vertices = vertices;
 
-            Mesh shrinkMesh = MeshUtils.Shrink(tempMesh, distance);
+            Mesh shrinkMesh = MeshUtils.Offset(tempMesh, -1 * distance);
             shrinkMesh = MeshUtils.DownSample(shrinkMesh, Mathf.FloorToInt(shrinkMesh.vertices.Length / 2));
 
             return MeshUtils.ToVector2(shrinkMesh.vertices);
-
         }
 
 

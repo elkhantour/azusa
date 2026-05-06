@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,7 +10,16 @@ namespace Island
 {
     public class IslandBuilder : MonoBehaviour
     {
-        [Header("Settings")]
+        [Serializable]
+        public class RootProperty
+        {
+            public int Segments = 30;
+            public float Depth = 1.0f;
+            public float Shrink = 0.4f;
+            public bool Smooth;
+        }
+
+        [Header("Builder")]
         [SerializeField] private GameObject chunkPrefab;
         [SerializeField] private int maxChunks = 10;
         [SerializeField] private float minRadius = 1f;
@@ -17,24 +27,30 @@ namespace Island
         [SerializeField] private float scrollSensitivity = 1f;
         [SerializeField] private float radiusPadding = 0f;
 
+        [Header("Island")]
+        [SerializeField] private RootProperty Belt;
+        [SerializeField] private RootProperty Bottom;
+        [SerializeField] private Material groundMaterial;
+        [SerializeField] private Material rootMaterial;
+
+
         [Header("Controls")]
         [SerializeField] private KeyCode spawnKey = KeyCode.P;
         [SerializeField] private KeyCode outlineKey = KeyCode.L;
         [SerializeField] private KeyCode deleteKey = KeyCode.Delete;
 
-        private List<GameObject> _spawnedChunks = new List<GameObject>();
+        private List<GameObject> _spawnedChunks = new();
+        private List<RadialMask> _circlesMask = new();
         private GameObject _currentActiveChunk;
-        private GameObject _outline;
+        private GameObject _ground;
+        private GameObject _root;
         private bool _isPlacingNew = false;
         private bool _isMovingExisting = false;
 
         void Awake()
         {
-
-            _outline = new GameObject("IslandOutline");
-            _outline.AddComponent<MeshFilter>();
-            _outline.AddComponent<MeshRenderer>();
-
+            _ground = CreateGameObject("IslandGround", groundMaterial);
+            _root = CreateGameObject("IslandRoot", rootMaterial);
         }
 
         void Update()
@@ -51,6 +67,21 @@ namespace Island
             {
                 HandleSelection();
             }
+        }
+
+        private GameObject CreateGameObject(string name, Material material = null)
+        {
+            GameObject go = new GameObject(name);
+            go.AddComponent<MeshFilter>();
+            MeshRenderer rd = go.AddComponent<MeshRenderer>();
+
+            if (material)
+            {
+                rd.material = material;
+            }
+
+            return go;
+
         }
 
         private void CameraLock()
@@ -86,9 +117,92 @@ namespace Island
 
             if (Input.GetKeyDown(outlineKey) && _currentActiveChunk == null)
             {
-                Outline();
+                GenerateGround();
+                GenerateRoot(_ground.GetComponent<MeshFilter>().mesh);
             }
         }
+
+
+        // -------------------------------------------------------------------------
+        // Generators
+        // -------------------------------------------------------------------------
+
+
+        /// <summary>
+        /// Convert the spawned circles into mesh through marchisquare and Delaunay triangulation.
+        /// </summary>
+        /// <returns>The final mesh.</returns>
+        private void GenerateGround()
+        {
+
+            // Map chunks into radial mask for square marching
+            _circlesMask = _spawnedChunks.Select(m => new RadialMask()
+            {
+                Position = m.transform.position,
+                Radius = (m.transform.localScale.x / 2.0f) - radiusPadding,
+            }).ToList();
+
+            // Define the area to scan
+            Rect bounds = GetBoundFromCircles(_circlesMask);
+
+            // Generate
+            var generator = new MarchingSquaresOutline(gridSize: 0.5f);
+            Mesh outlineMesh = generator.GenerateOutline(_circlesMask, bounds);
+            outlineMesh = MeshUtils.RemoveDuplicateVertices(outlineMesh);
+	    MeshUtils.RewindLoop(outlineMesh);
+	    
+            Triangulate(outlineMesh, _circlesMask);
+            outlineMesh.SetUVs(0, Uv.Planar(outlineMesh.vertices));
+
+            _ground.GetComponent<MeshFilter>().mesh = outlineMesh;
+        }
+
+        /// <summary>
+        /// Generate the island root according to the ground mesh.
+        /// </summary>
+        /// <remarks>
+        /// For the island's root we translate, shrink down the ground mesh and bridges the different parts together.
+        /// </remarks>
+        /// <returns>The final root mesh.</returns>
+        private void GenerateRoot(Mesh baseMesh)
+        {
+
+            // 1. Offset and shrink the root strates (belt, bootom)
+            Mesh beltMesh = MeshUtils.Clone(baseMesh);
+            //beltMesh = MeshUtils.Decimate(beltMesh, 1.0f);
+            Shrink(beltMesh, _circlesMask, 3 * Belt.Shrink);
+            MeshUtils.OffsetVertices(beltMesh, new Vector3(0, -Belt.Depth, 0));
+
+            Mesh bottomMesh = MeshUtils.Clone(baseMesh);
+            //bottomMesh = MeshUtils.Decimate(beltMesh, 1.3f);
+            Shrink(bottomMesh, _circlesMask, 3 * Bottom.Shrink);
+            MeshUtils.OffsetVertices(bottomMesh, new Vector3(0, -Bottom.Depth, 0));
+	    
+            // 2. Bridges the parts together 
+            CombineInstance[] combine = new CombineInstance[3];
+
+            Mesh baseBeltLoop = MeshBridge.CreateBridgeByProximity(baseMesh.vertices, beltMesh.vertices);
+            Mesh beltBottomLoop = MeshBridge.CreateBridgeByProximity(beltMesh.vertices, bottomMesh.vertices);
+
+	    Normal.Flip(bottomMesh);
+            // Since the blob is generated with marching square, vertex order is not contiguous anymore
+            // Which create stray triangles traversing the circles. So require a cleaning pass.
+            combine[0].mesh = baseBeltLoop;
+            combine[1].mesh = beltBottomLoop;
+            combine[2].mesh = bottomMesh;
+
+            // 3. Combine mesh in the global root variable
+            Mesh rootMesh = _root.GetComponent<MeshFilter>().mesh;
+            rootMesh.Clear();
+            rootMesh.CombineMeshes(combine, true, false);
+            rootMesh.RecalculateBounds();
+            rootMesh.RecalculateNormals();
+        }
+
+        // -------------------------------------------------------------------------
+        // Helper
+        // -------------------------------------------------------------------------
+
 
         /// <summary>
         /// Calculates a 2D Rect encompassing a list of circles (position + radius).
@@ -121,33 +235,166 @@ namespace Island
         }
 
 
-        private void Outline()
+
+        /// <summary>
+        /// Removes any triangle whose centroid falls outside all RadialMasks.
+        /// Works directly on an existing mesh — call this after BridgeConnect.
+        /// </summary>
+        private static void RemoveStrayTriangles(Mesh mesh, List<RadialMask> masks, float radiusBias = 0f)
+        {
+            Vector3[] vertices = mesh.vertices;
+            int[] triangles = mesh.triangles;
+
+            List<int> kept = new List<int>(triangles.Length);
+
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                Vector3 centroid = (vertices[triangles[i]]
+                                  + vertices[triangles[i + 1]]
+                                  + vertices[triangles[i + 2]]) / 3f;
+
+                if (!IsInsideAnyMask(centroid, masks, radiusBias))
+                {
+                    kept.Add(triangles[i]);
+                    kept.Add(triangles[i + 1]);
+                    kept.Add(triangles[i + 2]);
+                }
+            }
+
+            mesh.triangles = kept.ToArray();
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+        }
+
+        private static bool IsInsideAnyMask(Vector3 point, List<RadialMask> masks, float bias)
+        {
+            foreach (var mask in masks)
+            {
+                Vector3 delta = point - mask.Position;
+                delta.y = 0f;
+                float r = mask.Radius + bias;
+                if (delta.sqrMagnitude <= r * r)
+                    return true;
+            }
+            return false;
+        }
+
+
+        /// <summary>
+        /// Shrink the mesh vertices based on a distance-filed.
+        /// </summary>
+        /// <remarks>
+        /// For eact mesh vertices we check their distance on each radial masks. The closer, the harder the pull.
+        /// </remarks>
+        private static void Shrink(Mesh mesh, List<RadialMask> srcMasks, float strength)
         {
 
-            // Map chunks into radial mask for square marching
-            List<RadialMask> circles = _spawnedChunks.Select(m => new RadialMask()
+            // Subdivide our masks with average points for more accurate distance field
+            List<RadialMask> masks = AddMiddleAnchor(srcMasks);
+            List<Vector3> vertices = mesh.vertices.ToList();
+            List<Vector3> result = new(vertices.Count);
+
+            foreach (var v in vertices)
             {
-                Position = m.transform.position,
-                Radius = (m.transform.localScale.x / 2.0f) - radiusPadding,
-            }).ToList();
+                Vector3 total = Vector3.zero;
+                float totalWeight = 0f;
 
-            // Define the area to scan
-            Rect bounds = GetBoundFromCircles(circles);
+                foreach (var m in masks)
+                {
+                    Vector3 toCenter = new Vector3(
+                        m.Position.x - v.x,
+                        0f,
+                        m.Position.y - v.z
+                    );
 
-            // Generate
-            var generator = new MarchingSquaresOutline(gridSize: 0.5f);
-            Mesh outlineMesh = generator.GenerateOutline(circles, bounds);
+                    float dist = toCenter.magnitude;
+                    float radius = Mathf.Max(m.Radius, 0.0001f);
 
-            List<Vector3> verticesPos = new List<Vector3>();
-            outlineMesh.GetVertices(verticesPos);
-            Triangulator triangulator = new Triangulator(MeshUtils.ToVector2(verticesPos.ToArray()));
+                    // smooth decay (never fully zero)
+                    float t = dist / radius;
+                    float weight = 1f / (1f + t * t);
 
-            int[] triangles = Triangulator.Triangulate(verticesPos.ToArray());
-            triangles = Triangulator.RemoveOuterRingTriangles(triangles, verticesPos.ToArray(), circles);
-            outlineMesh.SetTriangles(triangles, 0);
-	    
-            _outline.GetComponent<MeshFilter>().mesh = outlineMesh;
+                    if (dist > 0.0001f)
+                        total += toCenter.normalized * weight;
+
+                    totalWeight += weight;
+                }
+
+                Vector3 final = v;
+
+                if (totalWeight > 0f)
+                {
+                    Vector3 avg = total / totalWeight;
+                    final += avg * strength;
+                }
+
+                result.Add(final);
+            }
+
+            mesh.vertices = result.ToArray();
+            mesh.RecalculateBounds();
         }
+
+
+        /// <summary>
+        /// Dedicated internal method to triangulate the island levels and clean
+        /// them according the the spawned circles.
+        /// </summary>
+        private static void Triangulate(Mesh mesh, List<RadialMask> spawnedCircles)
+        {
+            int[] triangles = Triangulator.Triangulate(mesh.vertices);
+            triangles = Triangulator.RemoveOuterRingTriangles(triangles, mesh.vertices, spawnedCircles);
+            mesh.SetTriangles(triangles, 0);
+        }
+
+        /// <summary>
+        /// Generate additional intermediate masks
+        /// placed at the midpoint between every pair of existing masks.
+        /// </summary>
+        /// <remarks>
+        /// The function does not modify the original masks but returns a new list
+        /// containing both the original masks and the generated midpoint anchors.
+        /// The midpoint mask position is computed as the average of two mask positions,
+        /// and its radius is the average of both radii.
+        /// 
+        /// Note: This operation has O(n²) complexity and may significantly increase
+        /// the number of masks for large input lists.
+        ///
+        /// Usecase: We mostly use this function to make the distance-field shrinking process
+        /// more accurate and keep the vertices inside.
+        /// </remarks>
+        public static List<RadialMask> AddMiddleAnchor(List<RadialMask> masks)
+        {
+            var result = new List<RadialMask>(masks);
+
+            int count = masks.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                for (int j = i + 1; j < count; j++)
+                {
+                    RadialMask a = masks[i];
+                    RadialMask b = masks[j];
+
+                    Vector2 midPos = (a.Position + b.Position) * 0.5f;
+
+                    float midRadius = (a.Radius + b.Radius) * 0.5f;
+
+                    result.Add(new RadialMask
+                    {
+                        Position = midPos,
+                        Radius = midRadius
+                    });
+                }
+            }
+
+            return result;
+        }
+
+
+        // -------------------------------------------------------------------------
+        // Input Events Handlers
+        // -------------------------------------------------------------------------
 
         private void SpawnNewChunk()
         {

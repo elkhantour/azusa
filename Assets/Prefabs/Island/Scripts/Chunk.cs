@@ -27,7 +27,6 @@ namespace Island
         public float Depth = 3;
         public List<Vector3> Vertices = new List<Vector3>();
         public List<Circle> Circles { get; private set; } = new List<Circle>();
-        public List<BridgeLoop> BridgeLoops { get; private set; } = new List<BridgeLoop>();
         public List<Mesh> PartMeshes = new List<Mesh>();
         public Bounds Bounds;
 
@@ -44,7 +43,7 @@ namespace Island
                         Smooth = true,
                         SmoothThresholdAngle = 160,
                         InnerCircles = new float[] { 1.0f },
-			NoiseAmplitude = 30.0f,
+            NoiseAmplitude = 30.0f,
                     },
                     //2. Set Belt
                     new Circle()
@@ -124,16 +123,8 @@ namespace Island
                 Circle currentCircle = Circles[i];
                 Circle nextCircle = Circles[(i + 1) % Circles.Count];
 
-                //Bridge Circles together
-                BridgeLoop bridgeLoop = new BridgeLoop(currentCircle.OuterVertices, nextCircle.OuterVertices)
-                {
-                    DebugMode = false
-                };
-
-                BridgeLoops.Add(bridgeLoop);
-
                 //Add bridged mesh to combine
-                Mesh loop = bridgeLoop.Connect();
+                Mesh loop = BridgeLoop.Connect(currentCircle.OuterVertices, nextCircle.OuterVertices);
                 combine[i].mesh = loop;
             }
 

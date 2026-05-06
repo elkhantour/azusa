@@ -60,7 +60,7 @@ namespace Utils
 
             if (_margin > 0)
             {
-                MeshUtils.Shrink(_internalMesh, _margin);
+                MeshUtils.Offset(_internalMesh, -1 * _margin);
             }
         }
 

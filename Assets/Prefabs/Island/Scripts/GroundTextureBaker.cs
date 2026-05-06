@@ -6,7 +6,6 @@ namespace Island
 {
     public class GroundTextureBaker : MonoBehaviour
     {
-
         [System.Serializable]
         public class GroundTextureArea
         {
@@ -295,7 +294,7 @@ namespace Island
                 Mesh shrunkMesh = Utils.MeshUtils.Clone(originalMesh);
                 foreach (var pass in shrinkPasses)
                 {
-                    Utils.MeshUtils.Shrink(shrunkMesh, pass.Value);
+                    Utils.MeshUtils.Offset(shrunkMesh, -1 * pass.Value);
                     groundObj.GetComponent<MeshFilter>().sharedMesh = shrunkMesh;
                     pass.Texture.filterMode = FilterMode.Bilinear;
                     bakeCamera.targetTexture = pass.Texture;
@@ -347,7 +346,11 @@ namespace Island
             bakeCamera.Render();
 
             // Apply shrinking
-            circles.ForEach(c => Utils.MeshUtils.Shrink(c.GetComponent<MeshFilter>().mesh, shrink));
+            circles.ForEach(c =>
+            {
+                Utils.MeshUtils.Offset(c.GetComponent<MeshFilter>().mesh, -1 * shrink);
+		// TODO: Triangulate
+            });
             // Render the initial mask in the end texture
             bakeCamera.targetTexture = TmpTex(TmpTexType.TownMaskEnd);
             bakeCamera.Render();

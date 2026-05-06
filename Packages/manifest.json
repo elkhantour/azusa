@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.angusj.clipper2": "https://github.com/JohnCGXIII/clipper2-upm.git",
     "com.nol1fe.delaunator": "https://github.com/nol1fe/delaunator-sharp.git?path=DelaunatorSharp.Unity",
     "com.unity.ai.navigation": "1.1.5",
     "com.unity.collab-proxy": "2.2.0",
