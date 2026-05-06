@@ -41,15 +41,35 @@ namespace Island
         private List<GameObject> _spawnedChunks = new();
         private List<RadialMask> _circlesMask = new();
         private GameObject _currentActiveChunk;
-        private GameObject _ground;
-        private GameObject _root;
         private bool _isPlacingNew = false;
         private bool _isMovingExisting = false;
 
+        // Game Objects cache
+        private struct GameObjectCache
+        {
+            public GameObject Island;
+            public GameObject Ground;
+            public GameObject Root;
+        }
+
+        private GameObjectCache _go;
+
+        // Inner mesh parts cache
+        private struct MeshCache
+        {
+            public Mesh Ground;
+            public Mesh RootTop;
+            public Mesh RootBottom;
+            public Mesh RootCap;
+        };
+
+        private MeshCache _meshes;
+
         void Awake()
         {
-            _ground = CreateGameObject("IslandGround", groundMaterial);
-            _root = CreateGameObject("IslandRoot", rootMaterial);
+            _go.Island = new GameObject("Island");
+            _go.Ground = CreateGameObject("Ground", groundMaterial, _go.Island);
+            _go.Root = CreateGameObject("Root", rootMaterial, _go.Island);
         }
 
         void Update()
@@ -68,7 +88,7 @@ namespace Island
             }
         }
 
-        private GameObject CreateGameObject(string name, Material material = null)
+        private GameObject CreateGameObject(string name, Material material = null, GameObject parent = null)
         {
             GameObject go = new GameObject(name);
             go.AddComponent<MeshFilter>();
@@ -78,6 +98,10 @@ namespace Island
             {
                 rd.material = material;
             }
+
+	    if(parent){
+		go.transform.SetParent(parent.transform);
+	    }
 
             return go;
         }
@@ -117,7 +141,9 @@ namespace Island
             if (Input.GetKeyDown(outlineKey) && _currentActiveChunk == null)
             {
                 GenerateGround();
-                GenerateRoot(_ground.GetComponent<MeshFilter>().mesh);
+                GenerateRoot(_meshes.Ground);
+                Noise();
+                CombineRoot();
             }
         }
 
@@ -148,14 +174,14 @@ namespace Island
 
             // Generate
             var generator = new MarchingSquaresOutline(gridSize: 0.5f);
-            Mesh outlineMesh = generator.GenerateOutline(_circlesMask, bounds);
-            outlineMesh = MeshUtils.RemoveDuplicateVertices(outlineMesh);
-            MeshUtils.RewindLoop(outlineMesh);
+            _meshes.Ground = generator.GenerateOutline(_circlesMask, bounds);
+            _meshes.Ground = MeshUtils.RemoveDuplicateVertices(_meshes.Ground);
+            MeshUtils.RewindLoop(_meshes.Ground);
 
-            Triangulate(outlineMesh, _circlesMask);
-            outlineMesh.SetUVs(0, Uv.Planar(outlineMesh.vertices));
+            Triangulate(_meshes.Ground, _circlesMask);
+            _meshes.Ground.SetUVs(0, Uv.Planar(_meshes.Ground.vertices));
 
-            _ground.GetComponent<MeshFilter>().mesh = outlineMesh;
+            _go.Ground.GetComponent<MeshFilter>().mesh = _meshes.Ground;
         }
 
         /// <summary>
@@ -170,135 +196,131 @@ namespace Island
         {
 
             // 1. Offset and shrink the root strates (belt, bootom)
-            Mesh beltMesh = MeshUtils.Clone(baseMesh);
-            // beltMesh = MeshUtils.Decimate(beltMesh, 1.0f);
-            Shrink(beltMesh, _circlesMask, 3 * Belt.Shrink);
-            MeshUtils.OffsetVertices(beltMesh, new Vector3(0, -Belt.Depth, 0));
+            Mesh topLoop = MeshUtils.Clone(baseMesh);
+            // topLoop = MeshUtils.Decimate(topLoop, 1.0f);
+            Shrink(topLoop, _circlesMask, 3 * Belt.Shrink);
+            MeshUtils.OffsetVertices(topLoop, new Vector3(0, -Belt.Depth, 0));
 
-            Mesh bottomMesh = MeshUtils.Clone(baseMesh);
-            // bottomMesh = MeshUtils.Decimate(beltMesh, 1.3f);
-            Shrink(bottomMesh, _circlesMask, 3 * Bottom.Shrink);
-            MeshUtils.OffsetVertices(bottomMesh, new Vector3(0, -Bottom.Depth, 0));
+            _meshes.RootCap = MeshUtils.Clone(baseMesh);
+            // _meshes.RootCap = MeshUtils.Decimate(topLoop, 1.3f);
+            Shrink(_meshes.RootCap, _circlesMask, 3 * Bottom.Shrink);
+            MeshUtils.OffsetVertices(_meshes.RootCap, new Vector3(0, -Bottom.Depth, 0));
 
             // 2. Bridges the parts together
-            CombineInstance[] combine = new CombineInstance[3];
+            _meshes.RootTop = MeshBridge.CreateBridgeByProximity(baseMesh.vertices, topLoop.vertices);
+            _meshes.RootBottom = MeshBridge.CreateBridgeByProximity(topLoop.vertices, _meshes.RootCap.vertices);
 
-            Mesh baseBeltLoop = MeshBridge.CreateBridgeByProximity(baseMesh.vertices,
-                                                                   beltMesh.vertices);
-            Mesh beltBottomLoop = MeshBridge.CreateBridgeByProximity(
-                beltMesh.vertices, bottomMesh.vertices);
-
-            Normal.Flip(bottomMesh);
-
-            Noise(baseMesh, baseBeltLoop, beltBottomLoop, bottomMesh);
-
-            // 3. Combine mesh in the global root variable
-            // Since the blob is generated with marching square, vertex order is not
-            // contiguous anymore Which create stray triangles traversing the circles.
-            // So require a cleaning pass.
-            combine[0].mesh = baseBeltLoop;
-            combine[1].mesh = beltBottomLoop;
-            combine[2].mesh = bottomMesh;
-            Mesh rootMesh = _root.GetComponent<MeshFilter>().mesh;
-            rootMesh.Clear();
-            rootMesh.CombineMeshes(combine, true, false);
-            rootMesh.RecalculateBounds();
-            rootMesh.RecalculateNormals();
+            Normal.Flip(_meshes.RootCap);
         }
 
         // -------------------------------------------------------------------------
         // Helper
         // -------------------------------------------------------------------------
 
-        private void Noise(Mesh baseMesh, Mesh baseBeltMesh, Mesh beltBottomMesh, Mesh bottomMesh)
+        private void CombineRoot()
+        {
+            CombineInstance[] combine = new CombineInstance[3];
+            combine[0].mesh = _meshes.RootTop;
+            combine[1].mesh = _meshes.RootBottom;
+            combine[2].mesh = _meshes.RootCap;
+
+            Mesh rootMesh = _go.Root.GetComponent<MeshFilter>().mesh;
+
+            rootMesh.Clear();
+            rootMesh.CombineMeshes(combine, true, false);
+            rootMesh.RecalculateBounds();
+            rootMesh.RecalculateNormals();
+        }
+
+        private void Noise()
         {
 
             List<NoiseJob> jobs = new List<NoiseJob>
-	    {
+        {
 		// Ground -> Belt Begin
 		new NoiseJob
-		{
-		    Name = "Ground to Belt",
-		    Noise = new NoiseSettings
-		    {
-			Mode = NoiseMode.XZRadial,
-			Amplitude = 0.6f
-		    },
-		    RadialMasks = _circlesMask,
-		    Items = new List<NoiseItem>
-		    {
-			new NoiseItem
-			{
-			    Mesh = baseMesh,
-			    Transform = _ground.transform,
-			    Range = (0, baseMesh.vertexCount)
-			},
-			new NoiseItem
-			{
-			    Mesh = baseBeltMesh,
-			    Transform = _root.transform,
-			    Range = (0, baseMesh.vertexCount)
-			}
-		    }
-		},
+        {
+            Name = "Ground to Belt",
+            Noise = new NoiseSettings
+            {
+            Mode = NoiseMode.XZRadial,
+            Amplitude = 0.6f
+            },
+            RadialMasks = _circlesMask,
+            Items = new List<NoiseItem>
+            {
+            new NoiseItem
+            {
+                Mesh = _meshes.Ground,
+                Transform = _go.Ground.transform,
+                Range = (0, _meshes.Ground.vertexCount)
+            },
+            new NoiseItem
+            {
+                Mesh = _meshes.RootTop,
+                Transform = _go.Root.transform,
+                Range = (0, _meshes.Ground.vertexCount)
+            }
+            }
+        },
 		
 		// Belt End -> Bottom Begin
 		new NoiseJob
-		{
-		    Name = "Belt End to Bottom Begin",
-		    Noise = new NoiseSettings
-		    {
-			Mode = NoiseMode.XZRadialPlusY,
-			Amplitude = 0.5f,
-			YAmplitude = 0.4f
-		    },
-		    RadialMasks = _circlesMask,
-		    Items = new List<NoiseItem>
-		    {
-			new NoiseItem
-			{
-			    Mesh = baseBeltMesh,
-			    Transform = _root.transform,
-			    Range = (baseMesh.vertexCount, baseBeltMesh.vertexCount)
-			},
-			new NoiseItem
-			{
-			    Mesh = beltBottomMesh,
-			    Transform = _root.transform,
-			    Range = (0, baseBeltMesh.vertexCount - baseMesh.vertexCount)
-			}
-		    }
-		},
+        {
+            Name = "Belt End to Bottom Begin",
+            Noise = new NoiseSettings
+            {
+            Mode = NoiseMode.XZRadialPlusY,
+            Amplitude = 0.5f,
+            YAmplitude = 0.4f
+            },
+            RadialMasks = _circlesMask,
+            Items = new List<NoiseItem>
+            {
+            new NoiseItem
+            {
+                Mesh = _meshes.RootTop,
+                Transform = _go.Root.transform,
+                Range = (_meshes.Ground.vertexCount, _meshes.RootTop.vertexCount)
+            },
+            new NoiseItem
+            {
+                Mesh = _meshes.RootBottom,
+                Transform = _go.Root.transform,
+                Range = (0, _meshes.RootTop.vertexCount - _meshes.Ground.vertexCount)
+            }
+            }
+        },
 		
 		// Bottom end -> Cap
 		new NoiseJob
-		{
-		    Name = "Bottom End to Cap",
-		    Noise = new NoiseSettings
-		    {
-			Mode = NoiseMode.PureY,
-			YAmplitude = 0.8f
-		    },
-		    RadialMasks = _circlesMask,
-		    Items = new List<NoiseItem>
-		    {
-			new NoiseItem
-			{
-			    Mesh = beltBottomMesh,
-			    Transform = _root.transform,
-			    Range = (baseBeltMesh.vertexCount - baseMesh.vertexCount, beltBottomMesh.vertexCount)
-			},
-			new NoiseItem
-			{
-			    Mesh = bottomMesh,
-			    Transform = _root.transform,
-			    Range = (0, bottomMesh.vertexCount)
-			}
-		    }
-		}
-	    };
+        {
+            Name = "Bottom End to Cap",
+            Noise = new NoiseSettings
+            {
+            Mode = NoiseMode.PureY,
+            YAmplitude = 0.8f
+            },
+            RadialMasks = _circlesMask,
+            Items = new List<NoiseItem>
+            {
+            new NoiseItem
+            {
+                Mesh = _meshes.RootBottom,
+                Transform = _go.Root.transform,
+                Range = (_meshes.RootTop.vertexCount - _meshes.Ground.vertexCount, _meshes.RootBottom.vertexCount)
+            },
+            new NoiseItem
+            {
+                Mesh = _meshes.RootCap,
+                Transform = _go.Root.transform,
+                Range = (0, _meshes.RootCap.vertexCount)
+            }
+            }
+        }
+        };
 
-	    
+
             NoiseIsland.Apply(jobs);
 
         }
