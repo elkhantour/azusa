@@ -159,7 +159,9 @@ namespace Island
 
             MeshUtils.RewindLoop(outlined);
 
-            Triangulate(outlined, _circlesMask);
+            int[] triangles = Triangulator.Triangulate(outlined.vertices);
+            triangles = Triangulator.RemoveOuterRingTriangles(triangles, outlined.vertices, _circlesMask);
+            outlined.SetTriangles(triangles, 0);
             outlined.SetUVs(0, Uv.Planar(outlined.vertices));
 
             _island.SetGroundMesh(outlined);
@@ -169,7 +171,7 @@ namespace Island
         {
 
             Mesh rootMesh = new();
-	    
+
             switch (_rootCreateMethod)
             {
                 case RootCreateMethod.BridgeLoop:
@@ -181,7 +183,7 @@ namespace Island
 
                 case RootCreateMethod.MeshNet:
                     rootMesh = _rootNetMesh.Generate(_island.GetGroundMesh(), _circlesMask);
-		    break;
+                    break;
             }
 
             _island.SetRootMesh(rootMesh);
@@ -265,19 +267,6 @@ namespace Island
                     return true;
             }
             return false;
-        }
-
-
-        /// <summary>
-        /// Dedicated internal method to triangulate the island levels and clean
-        /// them according the the spawned circles.
-        /// </summary>
-        private static void Triangulate(Mesh mesh, List<RadialMask> spawnedCircles)
-        {
-            int[] triangles = Triangulator.Triangulate(mesh.vertices);
-            triangles = Triangulator.RemoveOuterRingTriangles(triangles, mesh.vertices,
-                                                              spawnedCircles);
-            mesh.SetTriangles(triangles, 0);
         }
 
 

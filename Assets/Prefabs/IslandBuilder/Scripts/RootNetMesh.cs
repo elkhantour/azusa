@@ -76,6 +76,7 @@ namespace Island
                 triInput[i] = new Vector3(allXZ[i].x, 0f, allXZ[i].y);
 
             int[] delaunayTris = Triangulator.Triangulate(triInput);
+            delaunayTris = Triangulator.RemoveOuterRingTriangles(delaunayTris, triInput, radialMasks);
 
             // ── 5. Build 3-D vertices with downward displacement ─────────────
             var verts = new Vector3[allXZ.Count];
@@ -101,29 +102,14 @@ namespace Island
                     displacement = w * MaxDepth * noise;
                 }
 
+
                 verts[i] = new Vector3(xz.x, -displacement, xz.y);
             }
 
-            // ── 6. Skirt: fan border loop to apex ────────────────────────────
-            int borderCount = apexIndex - borderStart;
-            var skirtTris = new int[borderCount * 3];
-            for (int i = 0; i < borderCount; i++)
-            {
-                int a = borderStart + i;
-                int b = borderStart + (i + 1) % borderCount;
-                skirtTris[i * 3 + 0] = a;
-                skirtTris[i * 3 + 1] = apexIndex;
-                skirtTris[i * 3 + 2] = b;
-            }
-
-            // ── 7. Combine & build Mesh ───────────────────────────────────────
-            var allTris = new int[delaunayTris.Length + skirtTris.Length];
-            delaunayTris.CopyTo(allTris, 0);
-            skirtTris.CopyTo(allTris, delaunayTris.Length);
-
             var mesh = new Mesh { name = "RootNetMesh" };
+	    mesh = Normal.Flip(mesh);
             mesh.SetVertices(verts);
-            mesh.SetTriangles(allTris, 0);
+            mesh.SetTriangles(delaunayTris, 0);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;

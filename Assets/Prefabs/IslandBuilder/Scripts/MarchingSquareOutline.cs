@@ -121,7 +121,7 @@ namespace Island
             float t = (_isoValue - val1) / (val2 - val1);
             float posX = Mathf.Lerp(x1, x2, t) * _gridSize + bounds.xMin;
             float posZ = Mathf.Lerp(y1, y2, t) * _gridSize + bounds.yMin;
-            return new Vector3(posX, 0.2f, posZ); 
+            return new Vector3(posX, 0.0f, posZ); 
         }
     }
 }
