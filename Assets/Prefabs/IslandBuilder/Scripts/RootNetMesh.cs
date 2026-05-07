@@ -107,10 +107,10 @@ namespace Island
             }
 
             var mesh = new Mesh { name = "RootNetMesh" };
-	    mesh = Normal.Flip(mesh);
             mesh.SetVertices(verts);
             mesh.SetTriangles(delaunayTris, 0);
             mesh.RecalculateNormals();
+            mesh = Normal.Flip(mesh);
             mesh.RecalculateBounds();
             return mesh;
         }
