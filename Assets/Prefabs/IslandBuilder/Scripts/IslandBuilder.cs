@@ -28,7 +28,7 @@ namespace Island
         [Header("Root")]
         [SerializeField] private RootCreateMethod _rootCreateMethod = RootCreateMethod.BridgeLoop;
         [SerializeField] private RootBridgeLoop _rootBridgeLoop = new();
-
+        [SerializeField] private RootNetMesh _rootNetMesh = new();
 
         [Header("Controls")]
         [SerializeField] private KeyCode spawnKey = KeyCode.P;
@@ -168,20 +168,24 @@ namespace Island
         private void GenerateRoot()
         {
 
+            Mesh rootMesh = new();
+	    
             switch (_rootCreateMethod)
             {
                 case RootCreateMethod.BridgeLoop:
                     _rootBridgeLoop.Generate(_island.GetGroundMesh(), _circlesMask);
                     _rootBridgeLoop.Noise(_island.GetGroundMesh(), _island.GetRootMesh(), _circlesMask, _island.transform);
-                    _island.SetRootMesh(_rootBridgeLoop.GetCombinedMesh());
+
+                    rootMesh = _rootBridgeLoop.GetCombinedMesh();
                     break;
 
                 case RootCreateMethod.MeshNet:
-                    break;
+                    rootMesh = _rootNetMesh.Generate(_island.GetGroundMesh(), _circlesMask);
+		    break;
             }
 
+            _island.SetRootMesh(rootMesh);
             _island.BakeTexture();
-
         }
 
 
