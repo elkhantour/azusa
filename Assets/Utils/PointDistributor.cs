@@ -10,7 +10,7 @@ namespace Utils
      * @brief Takes in a mesh along with a number of points and proceeds to spread
      * uniformely random points within this mesh.
      */
-    public class PointDistributor
+    public class PointDistributor : MonoBehaviour
     {
 
         public class Triangle
@@ -55,7 +55,6 @@ namespace Utils
             // make a copy of the mesh to freely manipulate it (i.e. shrinking)
             CopyMeshFromGameObject(TargetObject, out _internalMesh);
 
-            Debug.Log(_internalMesh);
             _margin = margin;
 
             if (_margin > 0)
@@ -110,77 +109,6 @@ namespace Utils
             return positions;
         }
 
-        public Dictionary<Vector2Int, Vector3> GetJitteredGridPoints(float cellSize = 1.0f, float jitter = 0.4f, float stagger = 0.5f)
-        {
-            var gridPoints = new Dictionary<Vector2Int, Vector3>();
-
-            // Get references
-            MeshFilter mf = TargetObject.GetComponent<MeshFilter>();
-            MeshCollider mc = TargetObject.GetComponent<MeshCollider>();
-
-            if (mf == null || mc == null)
-            {
-                Debug.LogError("TargetObject needs both a MeshFilter and a MeshCollider!");
-                return gridPoints;
-            }
-
-            // Store OLD references (use sharedMesh to avoid auto-instantiating copies)
-            Mesh originalMesh = mf.sharedMesh;
-            Mesh originalColliderMesh = mc.sharedMesh;
-
-            // Swap in the shrunk mesh for the Raycast
-            mf.sharedMesh = _internalMesh;
-            mc.sharedMesh = _internalMesh;
-            // Force Physics to update immediately so the Raycast "sees" the shrunken shape
-            Physics.SyncTransforms();
-
-            // Calculate bounds based on the shrunken mesh
-            Bounds bounds = _internalMesh.bounds;
-            // If object is scaled/moved, transform these to World Space
-            Vector3 min = TargetObject.transform.TransformPoint(bounds.min);
-            Vector3 max = TargetObject.transform.TransformPoint(bounds.max);
-
-            float rayStartHeight = max.y + 5.0f;
-
-            // Calculate how many steps we need for X and Z
-            int colCount = Mathf.CeilToInt((max.x - min.x) / cellSize);
-            int rowCount = Mathf.CeilToInt((max.z - min.z) / cellSize);
-
-            for (int r = 0; r < rowCount; r++)
-            {
-                for (int c = 0; c < colCount; c++)
-                {
-                    // 1. Calculate base position
-                    float xBase = min.x + (c * cellSize);
-                    float zBase = min.z + (r * cellSize);
-
-                    // 2. Apply Jitter
-                    float range = cellSize * jitter;
-                    Vector3 rayOrigin = new Vector3(
-                        xBase + UnityEngine.Random.Range(-range, range),
-                        rayStartHeight,
-                        zBase + UnityEngine.Random.Range(-range, range)
-                    );
-
-                    // 3. Raycast
-                    if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit))
-                    {
-                        if (hit.collider.gameObject == TargetObject)
-                        {
-                            // Use Vector2Int as the "Address" of this point
-                            gridPoints.Add(new Vector2Int(c, r), hit.point);
-                        }
-                    }
-                }
-            }
-
-            // 4. Restore the original state so the island looks normal again
-            mf.sharedMesh = originalMesh;
-            mc.sharedMesh = originalColliderMesh;
-            Physics.SyncTransforms();
-
-            return gridPoints;
-        }
 
         /// <summary>
         /// Calculates the area of a triangle using Heron's Formula.

@@ -23,12 +23,12 @@ namespace Island
         [SerializeField] private Material groundMaterial;
         [SerializeField] private Material rootMaterial;
         [SerializeField] private GroundTextureBaker GroundTextureBaker;
-	
+
         [System.NonSerialized] public GameObject Parent;
         [System.NonSerialized] public GameObject Ground;
         [System.NonSerialized] public GameObject Root;
 
-	
+
         private void GenerateNomadTowns()
         {
             nomadTownMask = new List<RadialMask>();
@@ -47,7 +47,7 @@ namespace Island
 
         }
 
-        private GameObject CreateGameObject(string name, Material material = null, GameObject parent = null)
+        private GameObject CreateGameObject(string name, Material material = null, GameObject parent = null, string layer = null)
         {
             GameObject go = new GameObject(name);
             go.AddComponent<MeshFilter>();
@@ -63,6 +63,10 @@ namespace Island
                 go.transform.SetParent(parent.transform);
             }
 
+	    if(layer != null){
+		go.layer = LayerMask.NameToLayer(layer);
+	    }
+
             return go;
         }
 
@@ -71,16 +75,18 @@ namespace Island
             if (Ground != null)
             {
                 // Generate Flora
-                Flora.Init(Ground);
-                Flora.Parent = Parent;
-                Flora.Generate(nomadTownMask);
+                Flora.Generate(Ground, Parent, nomadTownMask);
+            }
+            else
+            {
+                throw new System.ArgumentException("Flora island requires a ground game object.");
             }
         }
 
         public void Init()
         {
             Parent = gameObject;
-            Ground = CreateGameObject("Ground", groundMaterial, Parent);
+            Ground = CreateGameObject("Ground", groundMaterial, Parent, "Ground");
             Root = CreateGameObject("Root", rootMaterial, Parent);
         }
 

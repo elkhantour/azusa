@@ -124,6 +124,7 @@ namespace Island
             {
                 GenerateGround();
                 GenerateRoot();
+		_island.GenerateFlora();
             }
         }
 

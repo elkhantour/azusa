@@ -56,19 +56,14 @@ namespace Island
         public bool DebugCell = false;
 
         [SerializeField]
-        /**
-         * To avoid clamping, We need to create a hierarchy for our flora elements. 
-         */
+
+        // To avoid clamping, We need to create a hierarchy for our flora elements. 
         public List<FloraElement> BigElements = new List<FloraElement>();
         public List<FloraElement> MediumElements = new List<FloraElement>();
         public List<FloraElement> SmallElements = new List<FloraElement>();
 
         private GameObject _area;
-
-        public void Init(GameObject area)
-        {
-            _area = area;
-        }
+        private GameObject _wrapper;
 
         private void DrawDebug(List<FloraElement> enumItems)
         {
@@ -95,8 +90,12 @@ namespace Island
             }
         }
 
-        private bool IsInsideMask(Vector3 position, List<RadialMask> masks, float exclusionBuffer = 2.0f)
+        private static bool IsInsideMask(Vector3 position, List<RadialMask> masks, float exclusionBuffer = 2.0f)
         {
+
+            Debug.Log("position: " + position);
+            Debug.Log("masks: " + masks);
+
             foreach (var mask in masks)
             {
                 // Get the radius of the outer-most ring
@@ -116,7 +115,7 @@ namespace Island
         {
             GameObject instance = GameObject.Instantiate(element.Mesh, position, Quaternion.Euler(0, UnityEngine.Random.Range(0, 360f), 0));
             instance.transform.localScale = Vector3.one * element.BaseSize * UnityEngine.Random.Range(element.MinSize, element.MaxSize);
-            if (Parent != null) instance.transform.SetParent(Parent.transform);
+            if (_wrapper != null) instance.transform.SetParent(_wrapper.transform);
         }
 
         private void DrawDebugCell(Vector3 position)
@@ -127,14 +126,22 @@ namespace Island
             quad.transform.localScale = Vector3.one * CellSize;
         }
 
-        public void Generate(List<RadialMask> masks = null)
+        public void Generate(GameObject area, GameObject parent = null, List<RadialMask> masks = null)
         {
             if (Fertility == 0) return;
 
-            PointDistributor spread = new PointDistributor(_area, DistanceFromEdge);
+            if (_wrapper) Clear();
+
+            _area = area;
+            _wrapper = new GameObject("Flora");
+            if (parent) _wrapper.transform.SetParent(parent.transform);
+
             // We need the raw grid data to know which point belongs to which cell
-            Dictionary<Vector2Int, Vector3> gridData = spread.GetJitteredGridPoints();
+            Dictionary<Vector2Int, Vector3> gridData = JitteredGrid.Spawn(_area, DistanceFromEdge, 1.0f, 0.4f, 0.5f, "Ground");
             List<Vector2Int> availableCoords = gridData.Keys.ToList();
+
+            Debug.Log($"Generated points: {gridData.Count}");
+            Debug.Log($"Available Coords: {availableCoords.Count}");
 
             List<FloraElement>[] spawnOrder = new List<FloraElement>[3]{
             BigElements.ToList(),
@@ -159,7 +166,7 @@ namespace Island
                         Vector2Int coord = availableCoords[randomIndex];
 
                         // Mask check
-                        if (IsInsideMask(gridData[coord], masks))
+                        if (masks != null && IsInsideMask(gridData[coord], masks))
                         {
                             availableCoords.RemoveAt(randomIndex);
                             n--; continue;
@@ -185,6 +192,12 @@ namespace Island
                 }
             }
 
+        }
+
+        public void Clear()
+        {
+            Destroy(_wrapper);
+            _wrapper = null;
         }
 
 
