@@ -78,11 +78,6 @@ namespace Island
             int[] delaunayTris = Triangulator.Triangulate(triInput);
             delaunayTris = Triangulator.RemoveOuterRingTriangles(delaunayTris, triInput, radialMasks);
 
-            for (int i = 0; i < baseMesh.vertexCount; i++)
-            {
-                Debug.Log(baseMesh.vertices[i] + " : " + borderLoop[i]);
-            }
-
             // ── 5. Build 3-D vertices with downward displacement ─────────────
             var verts = new Vector3[allXZ.Count];
             for (int i = 0; i < allXZ.Count; i++)
