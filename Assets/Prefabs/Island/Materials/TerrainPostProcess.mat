@@ -149,7 +149,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TownPattern:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: fa8d0a7b0e2d9476ab72e4126447c24f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -197,7 +197,7 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _SampleGI: 0
-    - _SandBaseScale: 20
+    - _SandBaseScale: 5
     - _SandPatternScale: 10
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
@@ -215,17 +215,17 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GrassA: {r: 0.4980109, g: 0.6509434, b: 0.16273585, a: 1}
     - _GrassB: {r: 0.25, g: 0.45, b: 0.15, a: 1}
-    - _GrassTintA: {r: 0.5271014, g: 0.7264151, b: 0.33922213, a: 1}
-    - _GrassTintB: {r: 0.353924, g: 0.49056602, b: 0.09487361, a: 1}
+    - _GrassTintA: {r: 0.68042314, g: 0.8584906, b: 0.46569067, a: 1}
+    - _GrassTintB: {r: 0.25, g: 0.45, b: 0.15, a: 1}
     - _SandA: {r: 0.93, g: 0.84, b: 0.65, a: 1}
     - _SandB: {r: 0.85, g: 0.75, b: 0.55, a: 1}
-    - _SandTintA: {r: 0.9056604, g: 0.8010486, b: 0.5339979, a: 1}
-    - _SandTintB: {r: 0.9056604, g: 0.83171475, b: 0.6450694, a: 1}
+    - _SandTintA: {r: 0.93, g: 0.84, b: 0.65, a: 1}
+    - _SandTintB: {r: 0.85, g: 0.75, b: 0.55, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TownA: {r: 0.72, g: 0.38, b: 0.24, a: 1}
     - _TownB: {r: 0.58, g: 0.28, b: 0.16, a: 1}
     - _TownGroundA: {r: 0, g: 0, b: 0, a: 0}
     - _TownGroundB: {r: 0, g: 0, b: 0, a: 0}
-    - _TownTintA: {r: 0.8396226, g: 0.44489634, b: 0.31287822, a: 1}
-    - _TownTintB: {r: 0.9433962, g: 0.67892146, b: 0.35154858, a: 1}
+    - _TownTintA: {r: 0.72, g: 0.38, b: 0.24, a: 1}
+    - _TownTintB: {r: 0.58, g: 0.28, b: 0.16, a: 1}
   m_BuildTextureStacks: []
