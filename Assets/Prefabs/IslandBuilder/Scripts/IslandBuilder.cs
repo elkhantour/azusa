@@ -175,14 +175,13 @@ namespace Island
             switch (_rootCreateMethod)
             {
                 case RootCreateMethod.BridgeLoop:
-                    _rootBridgeLoop.Generate(_island.GetGroundMesh(), _circlesMask);
-                    _rootBridgeLoop.Noise(_island.GetGroundMesh(), _island.GetRootMesh(), _circlesMask, _island.transform);
-
-                    rootMesh = _rootBridgeLoop.GetCombinedMesh();
+                    rootMesh = _rootBridgeLoop.Generate(_island.GetGroundMesh(), _circlesMask);
+                    _rootBridgeLoop.Noise(_island.GetGroundMesh(), rootMesh, _circlesMask, _island.transform);
                     break;
 
                 case RootCreateMethod.MeshNet:
                     rootMesh = _rootNetMesh.Generate(_island.GetGroundMesh(), _circlesMask);
+                    _rootNetMesh.Noise(_island.GetGroundMesh(), rootMesh, _circlesMask, _island.transform);
                     break;
             }
 

@@ -42,7 +42,7 @@ namespace Island
         /// For the island's root we translate, shrink down the ground mesh and
         /// bridges the different parts together.
         /// </remarks>
-        public void Generate(Mesh baseMesh, List<RadialMask> circlesMask)
+        public Mesh Generate(Mesh baseMesh, List<RadialMask> circlesMask)
         {
             // 1. Offset and shrink the root strates (belt, bootom)
             Mesh topLoop = MeshUtils.Clone(baseMesh);
@@ -60,9 +60,11 @@ namespace Island
             Parts.Bottom = MeshBridge.CreateBridgeByProximity(topLoop.vertices, Parts.Cap.vertices);
 
             Normal.Flip(Parts.Cap);
+
+            return GetCombinedMesh();
         }
 
-        public Mesh GetCombinedMesh()
+        private Mesh GetCombinedMesh()
         {
             CombineInstance[] combine = new CombineInstance[3];
             combine[0].mesh = Parts.Top;

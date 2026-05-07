@@ -62,10 +62,10 @@ namespace Island
             Rect bounds = ComputeBounds(borderLoop);
             List<Vector2> interiorPts = Utils.PoissonDisk.Spawn(bounds, borderLoop, PoissonRadius, PoissonCandidates);
 
-            // ── 3. Build flat point list: [interior ... border ... apex] ─────
-            List<Vector2> allXZ = new(interiorPts);
-            int borderStart = allXZ.Count;
-            allXZ.AddRange(borderLoop);
+            // ── 3. Build flat point list: [border ... interior ... apex] ─────
+            List<Vector2> allXZ = new(borderLoop);
+            int borderEnd = allXZ.Count;
+            allXZ.AddRange(interiorPts);
             int apexIndex = allXZ.Count;
             Vector2 centroid = Centroid(borderLoop);
             allXZ.Add(centroid);
@@ -78,12 +78,17 @@ namespace Island
             int[] delaunayTris = Triangulator.Triangulate(triInput);
             delaunayTris = Triangulator.RemoveOuterRingTriangles(delaunayTris, triInput, radialMasks);
 
+            for (int i = 0; i < baseMesh.vertexCount; i++)
+            {
+                Debug.Log(baseMesh.vertices[i] + " : " + borderLoop[i]);
+            }
+
             // ── 5. Build 3-D vertices with downward displacement ─────────────
             var verts = new Vector3[allXZ.Count];
             for (int i = 0; i < allXZ.Count; i++)
             {
                 Vector2 xz = allXZ[i];
-                bool isBorder = i >= borderStart && i < apexIndex;
+                bool isBorder = i < borderEnd;
                 bool isApex = i == apexIndex;
 
                 float displacement;
@@ -113,6 +118,40 @@ namespace Island
             mesh = Normal.Flip(mesh);
             mesh.RecalculateBounds();
             return mesh;
+
+        }
+
+        public void Noise(Mesh groundMesh, Mesh rootMesh, List<RadialMask> circlesMask, Transform transform)
+        {
+
+            List<NoiseJob> jobs = new List<NoiseJob>{
+		// Ground -> Belt Begin
+		new NoiseJob {
+            Name = "Ground to Belt",
+            Noise = new NoiseSettings {
+            Mode = NoiseMode.XZRadial,
+            Amplitude = 1.6f
+            },
+            RadialMasks = circlesMask,
+            Items = new List<NoiseItem>
+            {
+            new NoiseItem {
+                Mesh = groundMesh,
+                Transform = transform,
+                Range = (0, groundMesh.vertexCount)
+            },
+            new NoiseItem
+            {
+                Mesh = rootMesh,
+                Transform = transform,
+                Range = (0, groundMesh.vertexCount)
+            }
+            }
+        }
+        };
+
+            NoiseIsland.Apply(jobs);
+
         }
 
         // ── Noise & Weighting ─────────────────────────────────────────────────
