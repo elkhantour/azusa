@@ -32,7 +32,6 @@ namespace Island
 
         [Header("Controls")]
         [SerializeField] private KeyCode spawnKey = KeyCode.P;
-        [SerializeField] private KeyCode outlineKey = KeyCode.L;
         [SerializeField] private KeyCode deleteKey = KeyCode.Delete;
 
 
@@ -51,6 +50,8 @@ namespace Island
         {
             _island = Instantiate(islandPrefab);
             _island.Init();
+
+	    GenerateRandom();
         }
 
         void Update()
@@ -357,6 +358,56 @@ namespace Island
             _currentActiveChunk = null;
             _isMovingExisting = false;
             _isPlacingNew = false;
+        }
+
+        // -------------------------------------------------------------------------
+        // Debug
+        // -------------------------------------------------------------------------
+
+        private void GenerateRandom()
+        {
+            // Clean up any existing chunks first
+            foreach (var chunk in _spawnedChunks)
+                Destroy(chunk);
+            _spawnedChunks.Clear();
+
+            int count = UnityEngine.Random.Range(2, maxChunks + 1);
+
+            for (int i = 0; i < count; i++)
+            {
+                GameObject chunk = Instantiate(chunkPrefab);
+
+                // Random radius for this chunk
+                float radius = UnityEngine.Random.Range(minRadius, maxRadius);
+                chunk.transform.localScale = new Vector3(radius * 2f, chunk.transform.localScale.y, radius * 2f);
+
+                // First chunk anchors at origin, subsequent ones attach to a random existing chunk
+                if (i == 0)
+                {
+                    chunk.transform.position = Vector3.zero;
+                }
+                else
+                {
+                    // Pick a random already-placed chunk as anchor
+                    GameObject anchor = _spawnedChunks[UnityEngine.Random.Range(0, _spawnedChunks.Count)];
+                    float anchorRadius = anchor.transform.localScale.x / 2f;
+
+                    // Place at a random angle, at a distance guaranteed to overlap
+                    float angle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                    float maxOverlapDist = anchorRadius + radius; // touching = sum of radii, so stay under this
+                    float distance = UnityEngine.Random.Range(maxOverlapDist * 0.2f, maxOverlapDist * 0.85f);
+
+                    Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * distance;
+                    chunk.transform.position = anchor.transform.position + offset;
+                }
+
+                chunk.GetComponent<ChunkHelper>().SetActive(false);
+                _spawnedChunks.Add(chunk);
+            }
+
+            GenerateGround();
+            GenerateRoot();
+            _island.GenerateFlora();
         }
     }
 
