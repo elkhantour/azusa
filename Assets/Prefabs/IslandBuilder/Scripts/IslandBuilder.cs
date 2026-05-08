@@ -120,12 +120,6 @@ namespace Island
                 DeleteCurrentChunk();
             }
 
-            if (Input.GetKeyDown(outlineKey) && _currentActiveChunk == null)
-            {
-                GenerateGround();
-                GenerateRoot();
-		_island.GenerateFlora();
-            }
         }
 
         // -------------------------------------------------------------------------
@@ -327,6 +321,14 @@ namespace Island
                 _currentActiveChunk = null;
 
                 CameraUnlock();
+
+                // Auto-generate whenever a chunk is placed or repositioned
+                if (_spawnedChunks.Count > 0)
+                {
+                    GenerateGround();
+                    GenerateRoot();
+                    _island.GenerateFlora();
+                }
             }
         }
 
