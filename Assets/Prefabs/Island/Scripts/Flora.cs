@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utils;
 using Triangulation;
+using Island.Builder;
 
 namespace Island
 {
@@ -139,9 +140,6 @@ namespace Island
             // We need the raw grid data to know which point belongs to which cell
             Dictionary<Vector2Int, Vector3> gridData = JitteredGrid.Spawn(_area, DistanceFromEdge, 1.0f, 0.4f, 0.5f, "Ground");
             List<Vector2Int> availableCoords = gridData.Keys.ToList();
-
-            Debug.Log($"Generated points: {gridData.Count}");
-            Debug.Log($"Available Coords: {availableCoords.Count}");
 
             List<FloraElement>[] spawnOrder = new List<FloraElement>[3]{
             BigElements.ToList(),

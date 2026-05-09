@@ -45,13 +45,13 @@ public class TimeManager : MonoBehaviour
     public bool _runTime = true;
     public float _dayTotalTime = 24f; //length of a day in minute
     public float _timeSpeed = 1f;
-    private DayTime time = new DayTime { hours = 0f, minutes = 0f, seconds=0f };
+    private DayTime time = new DayTime { hours = 0f, minutes = 0f, seconds = 0f };
     public static event Action<int, DayMoment> OnUpdateMoment;
 
     //Cycle
     [Space]
     private DayMoment[] dayMoments;
-   
+
     private int currentMomentIndex = -1;
     protected static DayState currentDayState;
 
@@ -60,7 +60,7 @@ public class TimeManager : MonoBehaviour
 
         //Update Global Hour an Minutes
         time.seconds += Time.deltaTime * _timeSpeed;
-        if(time.seconds >= time.length)
+        if (time.seconds >= time.length)
         {
             time.seconds = 0;
         }
@@ -72,10 +72,11 @@ public class TimeManager : MonoBehaviour
 
         //update day moment depending on current time percentage
         int numberDays = dayMoments.Length;
-        for (int d = 0; d < numberDays; d++) {
+        for (int d = 0; d < numberDays; d++)
+        {
             DayMoment currentMoment = dayMoments[d];
-            DayMoment nextMoment = dayMoments[(d+1)%dayMoments.Length];
-            if ( ((d < numberDays - 1 && time.hours >= currentMoment.startTime && time.hours < nextMoment.startTime) ||
+            DayMoment nextMoment = dayMoments[(d + 1) % dayMoments.Length];
+            if (((d < numberDays - 1 && time.hours >= currentMoment.startTime && time.hours < nextMoment.startTime) ||
                  (d == numberDays - 1 && time.hours >= currentMoment.startTime)) &&
                 currentMomentIndex != d)
             {
@@ -85,7 +86,7 @@ public class TimeManager : MonoBehaviour
         }
     }
 
-    private void Awake()
+    void Awake()
     {
         _instance = this;
     }
@@ -93,7 +94,7 @@ public class TimeManager : MonoBehaviour
 
     void Start()
     {
-   
+
         //Start Cycle
         time.length = _dayTotalTime * 60f;
 

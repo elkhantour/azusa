@@ -2,7 +2,7 @@
 using UnityEngine;
 using DelaunatorSharp;
 using System.Linq;
-using Island;
+using Island.Builder;
 
 /*
  Execute a Delaunay Triangulation
