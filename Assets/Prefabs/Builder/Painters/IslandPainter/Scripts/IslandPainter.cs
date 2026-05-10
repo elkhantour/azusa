@@ -10,7 +10,7 @@ namespace Island
 {
     namespace Builder
     {
-        public class IslandBuilder : BuilderPainter
+        public class IslandPainter : BuilderPainter
         {
 
             public enum RootCreateMethod

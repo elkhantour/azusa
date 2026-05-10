@@ -30,7 +30,6 @@ namespace Island
             [SerializeField] private KeyCode spawnKey = KeyCode.P;
             [SerializeField] private KeyCode deleteKey = KeyCode.Delete;
 
-
             protected List<GameObject> _spawnedChunks = new();
             protected List<RadialMask> _circlesMask = new();
             protected GameObject _currentActiveChunk;
@@ -39,14 +38,16 @@ namespace Island
 
             protected virtual void HandlePlacementConfirmation() { }
 
-	    public void Enable() {
-		
-	    }
-	    
-            public void Disable() {
-		
-	    }
-	    
+            public void Enable()
+            {
+                enabled = true;
+            }
+
+            public void Disable()
+            {
+                enabled = false;
+            }
+
             void Update()
             {
                 HandleInput();

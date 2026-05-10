@@ -9,7 +9,7 @@ namespace Island
     namespace Builder
     {
 
-        public class NomadTownBuilder : BuilderPainter
+        public class NomadTownPainter : BuilderPainter
         {
 
 

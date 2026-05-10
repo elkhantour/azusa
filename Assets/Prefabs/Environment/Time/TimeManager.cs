@@ -50,10 +50,10 @@ public class TimeManager : MonoBehaviour
 
     //Cycle
     [Space]
-    private DayMoment[] dayMoments;
+    private DayMoment[] _dayMoments;
 
-    private int currentMomentIndex = -1;
-    protected static DayState currentDayState;
+    private int _currentMomentIndex = -1;
+    protected static DayState _currentDayState;
 
     private void updateTime()
     {
@@ -71,16 +71,16 @@ public class TimeManager : MonoBehaviour
         //Debug.Log(time.hours + ":" + time.minutes + ":" + time.seconds);
 
         //update day moment depending on current time percentage
-        int numberDays = dayMoments.Length;
+        int numberDays = _dayMoments.Length;
         for (int d = 0; d < numberDays; d++)
         {
-            DayMoment currentMoment = dayMoments[d];
-            DayMoment nextMoment = dayMoments[(d + 1) % dayMoments.Length];
+            DayMoment currentMoment = _dayMoments[d];
+            DayMoment nextMoment = _dayMoments[(d + 1) % _dayMoments.Length];
             if (((d < numberDays - 1 && time.hours >= currentMoment.startTime && time.hours < nextMoment.startTime) ||
                  (d == numberDays - 1 && time.hours >= currentMoment.startTime)) &&
-                currentMomentIndex != d)
+                _currentMomentIndex != d)
             {
-                currentMomentIndex = d;
+                _currentMomentIndex = d;
                 OnUpdateMoment?.Invoke(d, currentMoment);
             }
         }
@@ -89,6 +89,7 @@ public class TimeManager : MonoBehaviour
     void Awake()
     {
         _instance = this;
+        enabled = _runTime;
     }
 
 
@@ -99,7 +100,7 @@ public class TimeManager : MonoBehaviour
         time.length = _dayTotalTime * 60f;
 
         //Set days Moments
-        dayMoments = new DayMoment[] {
+        _dayMoments = new DayMoment[] {
             new DayMoment { state = DayState.SUNRISE, startTime = 1f, transitionTime = 10f / _timeSpeed },
             new DayMoment { state = DayState.DAY, startTime = 2f, transitionTime = 10f / _timeSpeed },
             new DayMoment { state = DayState.SUNSET, startTime = 3f, transitionTime = 10f / _timeSpeed },
@@ -109,9 +110,6 @@ public class TimeManager : MonoBehaviour
 
     void Update()
     {
-        if (_runTime)
-        {
-            updateTime();
-        }
+        updateTime();
     }
 }

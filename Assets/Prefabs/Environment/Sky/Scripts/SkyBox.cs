@@ -69,7 +69,8 @@ public class SkyBox : MonoBehaviour
     private void UpdateEnvironmentColors(Material mat)
     {
 
-        Debug.Log("Update render settings");
+	// DELETEME
+        //Debug.Log("Update render settings");
 
         // Use the parameter names from your shader
         Color sky = mat.GetColor("_AmbientSky");
