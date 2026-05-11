@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Island
 {
@@ -27,7 +28,6 @@ namespace Island
             [SerializeField] protected float radiusPadding = 0f;
 
             [Header("Controls")]
-            [SerializeField] private KeyCode spawnKey = KeyCode.P;
             [SerializeField] private KeyCode deleteKey = KeyCode.Delete;
 
             protected List<GameObject> _spawnedChunks = new();
@@ -36,20 +36,33 @@ namespace Island
             protected bool _isPlacingNew = false;
             protected bool _isMovingExisting = false;
 
-            protected virtual void HandlePlacementConfirmation() { }
+            protected virtual void OnPlacementConfirmation() { }
 
             public void Enable()
             {
                 enabled = true;
+                UpdateChunksVisibility();
             }
 
             public void Disable()
             {
                 enabled = false;
+		DeleteCurrentChunk();
+                UpdateChunksVisibility();
+            }
+
+            protected void UpdateChunksVisibility()
+            {
+                _spawnedChunks.ForEach(ch => ch.SetActive(enabled));
             }
 
             void Update()
             {
+
+		// Cancel if hovering UI
+                if (EventSystem.current.IsPointerOverGameObject())
+                    return;
+
                 HandleInput();
 
                 if (_isPlacingNew || _isMovingExisting)
@@ -65,21 +78,33 @@ namespace Island
             }
 
 
-            protected void CameraLock()
+            private void HandlePlacementConfirmation()
             {
-                CameraManager.Instance.SetMode(CameraModeType.Locked);
-            }
+                // On click, drop the chunk and return to idle state
+                if (Input.GetMouseButtonDown(0))
+                {
+                    if (_isPlacingNew)
+                    {
+                        _spawnedChunks.Add(_currentActiveChunk);
+                    }
 
-            protected void CameraUnlock()
-            {
-                CameraManager.Instance.SetMode(CameraModeType.Orbit);
-            }
+                    _isPlacingNew = false;
+                    _isMovingExisting = false;
+                    _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(false);
+                    _currentActiveChunk = null;
 
+                    // Auto-generate whenever a chunk is placed or repositioned
+                    if (_spawnedChunks.Count > 0)
+                    {
+                        OnPlacementConfirmation();
+                    }
+                }
+            }
 
             private void HandleInput()
             {
                 // Spawn new chunk
-                if (Input.GetKeyDown(spawnKey) && !_isPlacingNew && !_isMovingExisting)
+                if (!_isPlacingNew && !_isMovingExisting)
                 {
                     if (_spawnedChunks.Count < maxChunks)
                     {
@@ -106,7 +131,6 @@ namespace Island
                 _currentActiveChunk = Instantiate(chunkPrefab);
                 _isPlacingNew = true;
                 _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
-                CameraLock();
             }
 
             private void UpdateChunkPosition()

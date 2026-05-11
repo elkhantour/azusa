@@ -25,7 +25,6 @@ namespace Island
             [SerializeField] private RootNetMesh _rootNetMesh = new();
 
             [SerializeField] private Island _islandPrefab;
-            [SerializeField] private bool _autoGenerate;
             private Island _island;
 
 
@@ -34,8 +33,7 @@ namespace Island
                 _island = Instantiate(_islandPrefab);
                 _island.Init();
 
-                if (_autoGenerate)
-                    GenerateRandom();
+	        GenerateRandom();
             }
 
 
@@ -205,41 +203,21 @@ namespace Island
             // Input Events Handlers
             // -------------------------------------------------------------------------
 
-            protected override void HandlePlacementConfirmation()
+            protected override void OnPlacementConfirmation()
             {
-                // On click, drop the chunk and return to idle state
-                if (Input.GetMouseButtonDown(0))
-                {
-                    if (_isPlacingNew)
-                    {
-                        _spawnedChunks.Add(_currentActiveChunk);
-                    }
-
-                    _isPlacingNew = false;
-                    _isMovingExisting = false;
-
-                    _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(false);
-                    _currentActiveChunk = null;
-
-                    CameraUnlock();
-
-                    // Auto-generate whenever a chunk is placed or repositioned
-                    if (_spawnedChunks.Count > 0)
-                    {
                         GenerateGround();
                         GenerateRoot();
                         _island.GenerateFlora();
-                    }
-                }
             }
 
 
             // -------------------------------------------------------------------------
             // Debug
             // -------------------------------------------------------------------------
-
+            [ContextMenu("Generate Random")]
             private void GenerateRandom()
             {
+
                 // Clean up any existing chunks first
                 foreach (var chunk in _spawnedChunks)
                     Destroy(chunk);
@@ -279,9 +257,8 @@ namespace Island
                     _spawnedChunks.Add(chunk);
                 }
 
-                GenerateGround();
-                GenerateRoot();
-                _island.GenerateFlora();
+                UpdateChunksVisibility();
+		OnPlacementConfirmation();
             }
         }
 

@@ -61,17 +61,20 @@ namespace Island
                     {
                         painter.Disable();
                         _activePainter = null;
+                        CameraManager.Instance.SetMode(CameraModeType.Orbit);
                     }
                     else
                     {
                         painter.Enable();
                         _activePainter = painter;
+                        CameraManager.Instance.SetMode(CameraModeType.Locked);
                     }
 
                 }
                 else
                 {
                     _activePainter = null;
+                    CameraManager.Instance.SetMode(CameraModeType.Orbit);
                 }
 
                 // Update UI Buttons State

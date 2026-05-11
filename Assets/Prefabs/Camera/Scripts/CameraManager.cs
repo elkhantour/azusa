@@ -24,8 +24,9 @@ public class CameraManager : MonoBehaviour
     [Header("Core")]
     [SerializeField] private CameraModeType defaultMode;
 
-    [SerializeField] private CameraModeOrbit orbitMode;
-    [SerializeField] private CameraModeTopDown topDownMode;
+    [SerializeField] private CameraModeOrbit _orbitMode;
+    [SerializeField] private CameraModeTopDown _topDownMode;
+    [SerializeField] private CameraModeLocked _lockedMode;
 
     private CameraMode currentMode;
 
@@ -37,27 +38,19 @@ public class CameraManager : MonoBehaviour
 
     public void SetMode(CameraModeType mode)
     {
-        switch (mode)
+        currentMode = mode switch
         {
-            case CameraModeType.Orbit:
-                enabled = true;
-                currentMode = orbitMode;
-                break;
-
-            case CameraModeType.TopDown:
-                enabled = true;
-                currentMode = topDownMode;
-                break;
-
-            case CameraModeType.Locked:
-                enabled = false;
-                break;
-        }
+            CameraModeType.Orbit => _orbitMode,
+            CameraModeType.TopDown => _topDownMode,
+            CameraModeType.Locked => _lockedMode,
+            _ => null
+        };
     }
 
     private void LateUpdate()
     {
-        currentMode.Tick();
+	Debug.Log(currentMode);
+        currentMode?.Tick();
     }
 
     public CameraState GetState()
