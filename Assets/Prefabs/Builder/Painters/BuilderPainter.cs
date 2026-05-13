@@ -32,7 +32,7 @@ namespace Island
 
             protected List<GameObject> _spawnedChunks = new();
             protected List<RadialMask> _circlesMask = new();
-            protected GameObject _currentActiveChunk;
+            protected GameObject _activeChunk;
             protected bool _isPlacingNew = false;
             protected bool _isMovingExisting = false;
 
@@ -47,8 +47,18 @@ namespace Island
             public void Disable()
             {
                 enabled = false;
-		DeleteCurrentChunk();
+                DeleteCurrentChunk();
                 UpdateChunksVisibility();
+            }
+
+            protected float GetActiveChunkRadius()
+            {
+                return _activeChunk != null ? _activeChunk.transform.localScale.x / 2.0f : 0.0f;
+            }
+
+            protected Vector3 GetActiveChunkPosition()
+            {
+                return _activeChunk != null ? _activeChunk.transform.position : Vector3.zero;
             }
 
             protected void UpdateChunksVisibility()
@@ -59,7 +69,7 @@ namespace Island
             void Update()
             {
 
-		// Cancel if hovering UI
+                // Cancel if hovering UI
                 if (EventSystem.current.IsPointerOverGameObject())
                     return;
 
@@ -85,19 +95,20 @@ namespace Island
                 {
                     if (_isPlacingNew)
                     {
-                        _spawnedChunks.Add(_currentActiveChunk);
+                        _spawnedChunks.Add(_activeChunk);
                     }
-
-                    _isPlacingNew = false;
-                    _isMovingExisting = false;
-                    _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(false);
-                    _currentActiveChunk = null;
 
                     // Auto-generate whenever a chunk is placed or repositioned
                     if (_spawnedChunks.Count > 0)
                     {
                         OnPlacementConfirmation();
                     }
+
+                    _isPlacingNew = false;
+                    _isMovingExisting = false;
+                    _activeChunk.GetComponent<ChunkHelper>().SetActive(false);
+                    _activeChunk = null;
+
                 }
             }
 
@@ -118,7 +129,7 @@ namespace Island
 
                 // Delete selected chunk
                 if (Input.GetKeyDown(deleteKey) && _isMovingExisting &&
-                    _currentActiveChunk != null)
+                    _activeChunk != null)
                 {
                     DeleteCurrentChunk();
                 }
@@ -128,9 +139,9 @@ namespace Island
 
             private void SpawnNewChunk()
             {
-                _currentActiveChunk = Instantiate(chunkPrefab);
+                _activeChunk = Instantiate(chunkPrefab);
                 _isPlacingNew = true;
-                _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
+                _activeChunk.GetComponent<ChunkHelper>().SetActive(true);
             }
 
             private void UpdateChunkPosition()
@@ -142,7 +153,7 @@ namespace Island
                 if (groundPlane.Raycast(ray, out float enter))
                 {
                     Vector3 hitPoint = ray.GetPoint(enter);
-                    _currentActiveChunk.transform.position =
+                    _activeChunk.transform.position =
                         new Vector3(hitPoint.x, 0, hitPoint.z);
                 }
             }
@@ -153,10 +164,10 @@ namespace Island
                 if (Mathf.Abs(scroll) > 0.01f)
                 {
                     // Assuming the "radius" is represented by the localScale of the helper
-                    Vector3 scale = _currentActiveChunk.transform.localScale;
+                    Vector3 scale = _activeChunk.transform.localScale;
                     float newRadius = Mathf.Clamp(scale.x + (scroll * scrollSensitivity),
                                                   minRadius, maxRadius);
-                    _currentActiveChunk.transform.localScale =
+                    _activeChunk.transform.localScale =
                         new Vector3(newRadius, scale.y, newRadius);
                 }
             }
@@ -173,8 +184,8 @@ namespace Island
                         // Check if we hit one of our chunks
                         if (_spawnedChunks.Contains(hit.collider.gameObject))
                         {
-                            _currentActiveChunk = hit.collider.gameObject;
-                            _currentActiveChunk.GetComponent<ChunkHelper>().SetActive(true);
+                            _activeChunk = hit.collider.gameObject;
+                            _activeChunk.GetComponent<ChunkHelper>().SetActive(true);
                             _isMovingExisting = true;
                         }
                     }
@@ -183,9 +194,9 @@ namespace Island
 
             private void DeleteCurrentChunk()
             {
-                _spawnedChunks.Remove(_currentActiveChunk);
-                Destroy(_currentActiveChunk);
-                _currentActiveChunk = null;
+                _spawnedChunks.Remove(_activeChunk);
+                Destroy(_activeChunk);
+                _activeChunk = null;
                 _isMovingExisting = false;
                 _isPlacingNew = false;
             }

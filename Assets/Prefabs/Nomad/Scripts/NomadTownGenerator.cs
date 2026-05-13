@@ -19,24 +19,41 @@ public class NomadTownGenerator : MonoBehaviour
 
     public GameObject[] CenterPrefabs;
     public List<RingConfig> Rings = new List<RingConfig>();
+    private const float RADIUS_NO_OVERRIDE = 0.0f;
+    private const float RADIUS_BIAS = 10.0f; // To actually put the home on the circle
 
     public void Init()
     {
         GenerateTown();
     }
 
-    public void GenerateTown()
+    // TODO: rn we use a radiusOverride cause RingConfig already have a radius attribute
+    // So depending on the flow maybe we can simply remove the radius attribute are only use
+    // this one in the method argument
+    public void GenerateTown(GameObject parent = null, float radiusOverride = RADIUS_NO_OVERRIDE)
     {
-        //ClearTown();
-        SpawnCenter();
 
-        foreach (var ring in Rings)
+        //ClearTown();
+        SpawnCenter(parent);
+
+        for (int i = 0; i < Rings.Count; i++)
         {
-            SpawnRing(ring);
+            RingConfig ring = Rings[i];
+            float previousRadius = ring.Radius;
+
+            if (radiusOverride != RADIUS_NO_OVERRIDE)
+            {
+                ring.Radius = radiusOverride;
+            }
+
+            SpawnRing(ring, parent);
+
+            ring.Radius = previousRadius;
         }
+
     }
 
-    private void SpawnRing(RingConfig config)
+    private void SpawnRing(RingConfig config, GameObject parent = null)
     {
         List<Vector3> spawnedPositions = new List<Vector3>();
 
@@ -67,8 +84,6 @@ public class NomadTownGenerator : MonoBehaviour
                 attempts++;
             }
 
-            Debug.Log(validPosition);
-
             if (validPosition)
             {
                 GameObject prefab = config.Prefabs[Random.Range(0, config.Prefabs.Length)];
@@ -77,7 +92,7 @@ public class NomadTownGenerator : MonoBehaviour
                 Vector3 directionToCenter = (transform.position - finalPos).normalized;
                 Quaternion rotation = Quaternion.LookRotation(directionToCenter);
 
-                Instantiate(prefab, finalPos, rotation, transform);
+                Instantiate(prefab, finalPos, rotation, parent != null ? parent.transform : transform);
                 spawnedPositions.Add(finalPos);
             }
         }
@@ -93,11 +108,11 @@ public class NomadTownGenerator : MonoBehaviour
         return true;
     }
 
-    private void SpawnCenter()
+    private void SpawnCenter(GameObject parent = null)
     {
         if (CenterPrefabs.Length > 0)
         {
-            Instantiate(CenterPrefabs[Random.Range(0, CenterPrefabs.Length)], transform.position, Quaternion.identity, transform);
+            Instantiate(CenterPrefabs[Random.Range(0, CenterPrefabs.Length)], transform.position, Quaternion.identity, parent != null ? parent.transform : transform);
         }
     }
 

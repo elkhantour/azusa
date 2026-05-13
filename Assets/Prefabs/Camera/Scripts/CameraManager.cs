@@ -49,7 +49,6 @@ public class CameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
-	Debug.Log(currentMode);
         currentMode?.Tick();
     }
 
