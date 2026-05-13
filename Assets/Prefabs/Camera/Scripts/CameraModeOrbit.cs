@@ -6,49 +6,59 @@ public class CameraModeOrbit : CameraMode
 
     [Space]
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float zoomSpeed = 5f;
-    [SerializeField] private float rotationSpeed = 2.0f;
+    [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private float _zoomSpeed = 5f;
+    [SerializeField] private float _rotationSpeed = 2.0f;
     [Tooltip("Camera damping, 0.05 to 0.1 for more responsive feel, 0.3+ for heavier feel.")]
-    [SerializeField] protected float smoothTime = 0.3f;
+    [SerializeField] protected float _smoothTime = 0.3f;
 
-    [SerializeField] private bool restrictBelowFloor = true;
+    [SerializeField] private bool _restrictBelowFloor = true;
     [Tooltip("If enabled, camera tilts based on distance to ground as you zoom.")]
-    [SerializeField] private bool enableTiltOnZoom = true;
+    [SerializeField] private bool _enableTiltOnZoom = true;
 
 
 
     [Space]
     [Header("Vertical Orbit")]
     [Tooltip("Clamp the vertical orbit angle to avoid flipping")]
-    [SerializeField] private float minPitchAngle = -80f;
-    [SerializeField] private float maxPitchAngle = 80f;
+    [SerializeField] private float _minPitchAngle = -80f;
+    [SerializeField] private float _maxPitchAngle = 80f;
 
     [Space]
     [Header("Angle")]
     [Tooltip("The object from which the camera hit test to define the rotation point (i.e. grid)")]
-    [SerializeField] private Transform targetObject;
+    [SerializeField] private Transform _targetObject;
     [Tooltip("Minimum distance from the object")]
-    [SerializeField] private float minDistance = 5f;
+    [SerializeField] private float _minDistance = 5f;
     [Tooltip("Maximum distance from the object")]
-    [SerializeField] private float maxDistance = 20f;
+    [SerializeField] private float _maxDistance = 20f;
     [Tooltip("Minimum rotation angle when close to the object")]
-    [SerializeField] private float minAngle = 10f;
+    [SerializeField] private float _minAngle = 10f;
     [Tooltip("Maximum rotation angle when far from the object")]
-    [SerializeField] private float maxAngle = 45f;
+    [SerializeField] private float _maxAngle = 45f;
 
     // Orbit
-    private Vector3 lastHitPoint;
-    private float lastAngle = 0.0f;
-    private float xSmooth = 0.0f;
-    private float ySmooth = 0.0f;
-    private float mouseX = 0.0f;
-    private float mouseY = 0.0f;
-    private float xVelo = 0.0f;
-    private float yVelo = 0.0f;
+    private Vector3 _lastHitPoint;
+    private float _lastAngle = 0.0f;
+    private float _xSmooth = 0.0f;
+    private float _ySmooth = 0.0f;
+    private float _mouseX = 0.0f;
+    private float _mouseY = 0.0f;
+    private float _xVelo = 0.0f;
+    private float _yVelo = 0.0f;
+    private bool _freezeZoom = false;
+    private bool _freezeOrbit = false;
+    private bool _freezeMovement = false;
 
     public override void Activate() { }
     public override void Deactivate() { }
+
+    public void FreezeMovement() { _freezeMovement = true; }
+    public void UnfreezeMovement() { _freezeMovement = false; }
+    public void FreezeZoom() { _freezeZoom = true; }
+    public void UnfreezeZoom() { _freezeZoom = false; }
+    public void FreezeOrbit() { _freezeOrbit = true; }
+    public void UnfreezeOrbit() { _freezeOrbit = false; }
 
     public override void Tick()
     {
@@ -57,9 +67,12 @@ public class CameraModeOrbit : CameraMode
         MoveCamera(horizontal, vertical);
 
         float scrollWheel = Input.GetAxis("Mouse ScrollWheel");
-        ZoomCamera(scrollWheel);
 
-        Orbit();
+        if (!_freezeZoom)
+            ZoomCamera(scrollWheel);
+
+        if (!_freezeOrbit)
+            Orbit();
 
         if (Input.GetMouseButtonDown(1))
             state = CameraState.Rotate;
@@ -79,41 +92,41 @@ public class CameraModeOrbit : CameraMode
         right.Normalize();
 
         Vector3 moveDirection = (right * horizontal + forward * vertical).normalized;
-        transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
+        transform.Translate(moveDirection * _moveSpeed * Time.deltaTime, Space.World);
     }
 
     private void ZoomCamera(float scrollWheel)
     {
         // --- Zoom movement ---
-        transform.Translate(CameraObject.transform.forward * scrollWheel * zoomSpeed, Space.World);
+        transform.Translate(CameraObject.transform.forward * scrollWheel * _zoomSpeed, Space.World);
 
         // --- Tilt on zoom ---
-        if (!enableTiltOnZoom) return;
+        if (!_enableTiltOnZoom) return;
 
         float t = 0.0f;
         float targetAngle = 0.0f;
         float distance = 0.0f;
 
-        if (targetObject != null)
+        if (_targetObject != null)
         {
             RaycastHit hit;
             if (Physics.Raycast(transform.position, Vector3.down, out hit))
             {
-                if (hit.transform.IsChildOf(targetObject))
+                if (hit.transform.IsChildOf(_targetObject))
                 {
                     distance = Vector3.Distance(transform.position, hit.point);
-                    distance = Mathf.Clamp(distance, minDistance, maxDistance);
-                    t = Mathf.InverseLerp(minDistance, maxDistance, distance);
-                    targetAngle = Mathf.Lerp(minAngle, maxAngle, t);
+                    distance = Mathf.Clamp(distance, _minDistance, _maxDistance);
+                    t = Mathf.InverseLerp(_minDistance, _maxDistance, distance);
+                    targetAngle = Mathf.Lerp(_minAngle, _maxAngle, t);
                 }
             }
         }
         else
         {
             distance = transform.position.y;
-            distance = Mathf.Clamp(distance, minDistance, maxDistance);
-            t = Mathf.InverseLerp(minDistance, maxDistance, distance);
-            targetAngle = Mathf.Lerp(minAngle, maxAngle, t);
+            distance = Mathf.Clamp(distance, _minDistance, _maxDistance);
+            t = Mathf.InverseLerp(_minDistance, _maxDistance, distance);
+            targetAngle = Mathf.Lerp(_minAngle, _maxAngle, t);
         }
 
         Quaternion targetRotation = Quaternion.Euler(targetAngle, transform.eulerAngles.y, transform.eulerAngles.z);
@@ -122,14 +135,14 @@ public class CameraModeOrbit : CameraMode
 
     private void Orbit()
     {
-        if (lastAngle == transform.rotation.y && state == CameraState.Rest)
+        if (_lastAngle == transform.rotation.y && state == CameraState.Rest)
         {
-            mouseX = 0.0f;
-            mouseY = 0.0f;
+            _mouseX = 0.0f;
+            _mouseY = 0.0f;
 
-            if (xSmooth > -0.001 && xSmooth < 0.001 && ySmooth > -0.001 && ySmooth < 0.001)
+            if (_xSmooth > -0.001 && _xSmooth < 0.001 && _ySmooth > -0.001 && _ySmooth < 0.001)
             {
-                lastHitPoint = Vector3.zero;
+                _lastHitPoint = Vector3.zero;
                 return;
             }
         }
@@ -141,7 +154,7 @@ public class CameraModeOrbit : CameraMode
             Vector3 hitPoint = Vector3.zero;
             bool gotHit = false;
 
-            if (targetObject != null)
+            if (_targetObject != null)
             {
                 RaycastHit hit;
                 if (Physics.Raycast(ray, out hit))
@@ -167,36 +180,36 @@ public class CameraModeOrbit : CameraMode
 
             if (gotHit)
             {
-                if (lastHitPoint == Vector3.zero)
-                    lastHitPoint = hitPoint;
+                if (_lastHitPoint == Vector3.zero)
+                    _lastHitPoint = hitPoint;
 
-                mouseX += Input.GetAxis("Mouse X") * rotationSpeed * 0.2f;
-                mouseY -= Input.GetAxis("Mouse Y") * rotationSpeed * 0.2f;
+                _mouseX += Input.GetAxis("Mouse X") * _rotationSpeed * 0.2f;
+                _mouseY -= Input.GetAxis("Mouse Y") * _rotationSpeed * 0.2f;
             }
         }
 
-        xSmooth = Mathf.SmoothDamp(xSmooth, mouseX, ref xVelo, smoothTime);
-        ySmooth = Mathf.SmoothDamp(ySmooth, mouseY, ref yVelo, smoothTime);
+        _xSmooth = Mathf.SmoothDamp(_xSmooth, _mouseX, ref _xVelo, _smoothTime);
+        _ySmooth = Mathf.SmoothDamp(_ySmooth, _mouseY, ref _yVelo, _smoothTime);
 
         // Horizontal orbit around world up — unchanged
-        transform.RotateAround(lastHitPoint, Vector3.up, xSmooth);
+        transform.RotateAround(_lastHitPoint, Vector3.up, _xSmooth);
 
         // Vertical orbit around the rig's local right axis, clamped to avoid flipping
         float currentPitch = transform.eulerAngles.x;
         if (currentPitch > 180f) currentPitch -= 360f; // normalize to -180/180
 
-        float clampedY = ySmooth;
-        if ((currentPitch + clampedY) > maxPitchAngle) clampedY = maxPitchAngle - currentPitch;
-        if ((currentPitch + clampedY) < minPitchAngle) clampedY = minPitchAngle - currentPitch;
+        float clampedY = _ySmooth;
+        if ((currentPitch + clampedY) > _maxPitchAngle) clampedY = _maxPitchAngle - currentPitch;
+        if ((currentPitch + clampedY) < _minPitchAngle) clampedY = _minPitchAngle - currentPitch;
 
-        transform.RotateAround(lastHitPoint, transform.right, clampedY);
+        transform.RotateAround(_lastHitPoint, transform.right, clampedY);
 
-        lastAngle = transform.rotation.y;
+        _lastAngle = transform.rotation.y;
     }
 
     private void LateUpdate()
     {
-        if (restrictBelowFloor)
+        if (_restrictBelowFloor)
             RestrictBelowFloor();
     }
 

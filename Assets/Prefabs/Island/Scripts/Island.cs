@@ -64,9 +64,10 @@ namespace Island
                 go.transform.SetParent(parent.transform);
             }
 
-	    if(layer != null){
-		go.layer = LayerMask.NameToLayer(layer);
-	    }
+            if (layer != null)
+            {
+                go.layer = LayerMask.NameToLayer(layer);
+            }
 
             return go;
         }
@@ -97,6 +98,11 @@ namespace Island
             Texture2D texture = GroundTextureBaker.Bake(Ground, nomadTownMask);
             MeshRenderer groundRenderer = Ground.GetComponent<MeshRenderer>();
             groundRenderer.material.SetTexture("_BaseMap", texture);
+        }
+
+        public void SetNomadTownList(List<RadialMask> masks)
+        {
+            nomadTownMask = masks;
         }
 
         public void GenerateFlora()

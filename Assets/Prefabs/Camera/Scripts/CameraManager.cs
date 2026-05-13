@@ -47,6 +47,15 @@ public class CameraManager : MonoBehaviour
         };
     }
 
+    public void FreezeZoom(){
+	_orbitMode.FreezeZoom();
+    }
+
+    public void UnfreezeZoom(){
+	_orbitMode.UnfreezeZoom();
+    }
+
+    
     private void LateUpdate()
     {
         currentMode?.Tick();

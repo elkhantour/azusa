@@ -52,29 +52,47 @@ namespace Island
                 }
             }
 
+            private void DisablePainter(BuilderPainter painter)
+            {
+                painter.Disable();
+                _activePainter = null;
+                CameraManager.Instance.UnfreezeZoom();
+            }
+
+            private void EnablePainter(BuilderPainter painter)
+            {
+                painter.Enable();
+                _activePainter = painter;
+                CameraManager.Instance.FreezeZoom();
+            }
+
             public void UpdatePainterMode(PainterMode mode)
             {
-
                 if (_painters.TryGetValue(mode, out BuilderPainter painter))
                 {
+
+		    // Switch mode while one is already active => deactivate active first
+                    if (_activePainter && painter != _activePainter)
+                    {
+                        DisablePainter(_activePainter);
+                    }
+
+
                     if (painter.enabled)
                     {
-                        painter.Disable();
-                        _activePainter = null;
-                        CameraManager.Instance.SetMode(CameraModeType.Orbit);
+                        DisablePainter(painter);
                     }
                     else
                     {
-                        painter.Enable();
-                        _activePainter = painter;
-                        CameraManager.Instance.SetMode(CameraModeType.Locked);
+                        EnablePainter(painter);
                     }
+
 
                 }
                 else
                 {
                     _activePainter = null;
-                    CameraManager.Instance.SetMode(CameraModeType.Orbit);
+                    CameraManager.Instance.UnfreezeZoom();
                 }
 
                 // Update UI Buttons State

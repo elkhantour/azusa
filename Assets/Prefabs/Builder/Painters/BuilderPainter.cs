@@ -38,6 +38,8 @@ namespace Island
 
             protected virtual void OnPlacementConfirmation() { }
 
+	    
+	    
             public void Enable()
             {
                 enabled = true;
@@ -178,12 +180,21 @@ namespace Island
             {
                 if (Input.GetMouseButtonDown(0))
                 {
+
+		    Debug.Log("Cast");
+		    
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                     if (Physics.Raycast(ray, out RaycastHit hit))
                     {
+
+                        Debug.Log("HIT!");
+
+
                         // Check if we hit one of our chunks
                         if (_spawnedChunks.Contains(hit.collider.gameObject))
                         {
+                            Debug.Log("FOUND!");
+
                             _activeChunk = hit.collider.gameObject;
                             _activeChunk.GetComponent<ChunkHelper>().SetActive(true);
                             _isMovingExisting = true;

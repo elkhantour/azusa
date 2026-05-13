@@ -25,7 +25,7 @@ namespace Island
             [SerializeField] private RootNetMesh _rootNetMesh = new();
 
             [SerializeField] private Island _islandPrefab;
-            private Island _island;
+	    private Island _island;
 
 
             void Awake()
