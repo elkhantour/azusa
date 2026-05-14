@@ -93,10 +93,6 @@ namespace Island
 
         private static bool IsInsideMask(Vector3 position, List<RadialMask> masks, float exclusionBuffer = 2.0f)
         {
-
-            Debug.Log("position: " + position);
-            Debug.Log("masks: " + masks);
-
             foreach (var mask in masks)
             {
                 // Get the radius of the outer-most ring

@@ -24,15 +24,8 @@ namespace Island
             [SerializeField] private RootBridgeLoop _rootBridgeLoop = new();
             [SerializeField] private RootNetMesh _rootNetMesh = new();
 
-            [SerializeField] private Island _islandPrefab;
-	    private Island _island;
-
-
             void Awake()
             {
-                _island = Instantiate(_islandPrefab);
-                _island.Init();
-
 	        GenerateRandom();
             }
 

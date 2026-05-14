@@ -30,6 +30,10 @@ namespace Island
                 newTown.transform.position = GetActiveChunkPosition();
                 _spawnedTowns[_activeChunk] = newTown;
 
+		
+                _island.SetNomadTownList(_circlesMask);
+		_island.BakeTexture();
+		_island.GenerateFlora();
             }
 
 

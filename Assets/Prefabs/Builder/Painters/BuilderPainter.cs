@@ -35,11 +35,15 @@ namespace Island
             protected GameObject _activeChunk;
             protected bool _isPlacingNew = false;
             protected bool _isMovingExisting = false;
+            protected Island _island;
 
             protected virtual void OnPlacementConfirmation() { }
 
-	    
-	    
+            public void Init(Island island)
+            {
+                _island = island;
+            }
+
             public void Enable()
             {
                 enabled = true;
@@ -98,6 +102,11 @@ namespace Island
                     if (_isPlacingNew)
                     {
                         _spawnedChunks.Add(_activeChunk);
+                        _circlesMask.Add(new RadialMask()
+                        {
+                            Position = GetActiveChunkPosition(),
+                            Radius = GetActiveChunkRadius(),
+                        });
                     }
 
                     // Auto-generate whenever a chunk is placed or repositioned
@@ -181,8 +190,8 @@ namespace Island
                 if (Input.GetMouseButtonDown(0))
                 {
 
-		    Debug.Log("Cast");
-		    
+                    Debug.Log("Cast");
+
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                     if (Physics.Raycast(ray, out RaycastHit hit))
                     {
@@ -206,6 +215,7 @@ namespace Island
             private void DeleteCurrentChunk()
             {
                 _spawnedChunks.Remove(_activeChunk);
+		// TODO handle circle mask removal
                 Destroy(_activeChunk);
                 _activeChunk = null;
                 _isMovingExisting = false;

@@ -33,12 +33,18 @@ namespace Island
             private Dictionary<PainterMode, BuilderPainter> _painters;
             private BuilderPainter _activePainter;
 
+            [SerializeField] private Island _islandPrefab;
+            private Island _island;
+
             void Awake()
             {
 
                 _instance = this;
                 _hudCanvas = Instantiate(_hudCanvas);
                 _hud = _hudCanvas.GetComponent<BuilderHud>();
+
+                _island = Instantiate(_islandPrefab);
+                _island.Init();
 
                 _painters = new Dictionary<PainterMode, BuilderPainter>
         {
@@ -48,8 +54,10 @@ namespace Island
 
                 foreach (BuilderPainter pt in _painters.Values)
                 {
+                    pt.Init(_island);
                     pt.Disable();
                 }
+
             }
 
             private void DisablePainter(BuilderPainter painter)
@@ -71,7 +79,7 @@ namespace Island
                 if (_painters.TryGetValue(mode, out BuilderPainter painter))
                 {
 
-		    // Switch mode while one is already active => deactivate active first
+                    // Switch mode while one is already active => deactivate active first
                     if (_activePainter && painter != _activePainter)
                     {
                         DisablePainter(_activePainter);

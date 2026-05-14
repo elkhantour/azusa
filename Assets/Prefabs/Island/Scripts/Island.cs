@@ -29,7 +29,6 @@ namespace Island
         [System.NonSerialized] public GameObject Ground;
         [System.NonSerialized] public GameObject Root;
 
-
         private void GenerateNomadTowns()
         {
             nomadTownMask = new List<RadialMask>();

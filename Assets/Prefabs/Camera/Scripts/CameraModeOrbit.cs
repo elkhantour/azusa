@@ -55,8 +55,10 @@ public class CameraModeOrbit : CameraMode
 
     public void FreezeMovement() { _freezeMovement = true; }
     public void UnfreezeMovement() { _freezeMovement = false; }
+
     public void FreezeZoom() { _freezeZoom = true; }
     public void UnfreezeZoom() { _freezeZoom = false; }
+
     public void FreezeOrbit() { _freezeOrbit = true; }
     public void UnfreezeOrbit() { _freezeOrbit = false; }
 
@@ -64,7 +66,8 @@ public class CameraModeOrbit : CameraMode
     {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        MoveCamera(horizontal, vertical);
+        if (!_freezeMovement)
+            MoveCamera(horizontal, vertical);
 
         float scrollWheel = Input.GetAxis("Mouse ScrollWheel");
 
