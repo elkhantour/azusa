@@ -17,21 +17,12 @@ namespace Island
             {
 
                 [Header("Painter Modes Triggers")]
-                [SerializeField] private List<PainterModeButton> _painterModeButtons = new();
-                [SerializeField] private GameObject _catalogBackground;
-                private PainterModeButton _activeButton;
+                [SerializeField] private List<BuildModeButton> _buildModeButtons = new();
+                private BuildModeButton _activeButton;
 
-
-                public void Awake()
+                public void UpdateModeButtons(ModeType mode)
                 {
-
-                    _catalogBackground.SetActive(false);
-
-                }
-
-                public void UpdatePainterButtons(PainterMode mode)
-                {
-                    PainterModeButton targetButton = _painterModeButtons[(int)mode];
+                    BuildModeButton targetButton = _buildModeButtons[(int)mode];
 
                     if (_activeButton != null && _activeButton != targetButton)
                     {
@@ -40,7 +31,6 @@ namespace Island
 
                     targetButton.SetState(!targetButton.Active);
                     _activeButton = targetButton.Active ? targetButton : null;
-                    _catalogBackground.SetActive(_activeButton != null);
 
                 }
 

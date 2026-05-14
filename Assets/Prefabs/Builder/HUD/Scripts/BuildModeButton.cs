@@ -13,12 +13,12 @@ namespace Island
         namespace HUD
         {
 
-            public class PainterModeButton : MonoBehaviour
+            public class BuildModeButton : MonoBehaviour
             {
 
                 [SerializeField] private Sprite _defaultSprite;
                 [SerializeField] private Sprite _activeSprite;
-                [SerializeField] private PainterMode _painterMode;
+                [SerializeField] private ModeType _buildMode;
 
                 private Image _image;
                 public bool Active = false;
@@ -31,7 +31,7 @@ namespace Island
 
                 public void OnClick()
                 {
-                    BuilderManager.Instance.UpdatePainterMode(_painterMode);
+                    BuilderManager.Instance.UpdatePainterMode(_buildMode);
                 }
 
                 public void SetState(bool state)

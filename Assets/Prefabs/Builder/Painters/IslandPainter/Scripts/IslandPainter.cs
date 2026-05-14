@@ -24,11 +24,12 @@ namespace Island
             [SerializeField] private RootBridgeLoop _rootBridgeLoop = new();
             [SerializeField] private RootNetMesh _rootNetMesh = new();
 
-            void Awake()
-            {
-	        GenerateRandom();
-            }
 
+            public override void Init(Island island)
+            {
+                base.Init(island);
+                GenerateRandom();
+            }
 
             private GameObject CreateGameObject(string name, Material material = null, GameObject parent = null)
             {
@@ -198,9 +199,9 @@ namespace Island
 
             protected override void OnPlacementConfirmation()
             {
-                        GenerateGround();
-                        GenerateRoot();
-                        _island.GenerateFlora();
+                GenerateGround();
+                GenerateRoot();
+                _island.GenerateFlora();
             }
 
 
@@ -251,7 +252,7 @@ namespace Island
                 }
 
                 UpdateChunksVisibility();
-		OnPlacementConfirmation();
+                OnPlacementConfirmation();
             }
         }
 

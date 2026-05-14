@@ -39,7 +39,7 @@ namespace Island
 
             protected virtual void OnPlacementConfirmation() { }
 
-            public void Init(Island island)
+            public virtual void Init(Island island)
             {
                 _island = island;
             }

@@ -21,18 +21,19 @@ namespace Island
                 }
             }
 
+            [Header("Build Modes")]
+            [SerializeField] private Mode _islandMode;
+            [SerializeField] private Mode _nomadTownMode;
+            [SerializeField] private Mode _templeMode;
 
-            [Header("Painters")]
-            [SerializeField] private IslandPainter _islandPainter;
-            [SerializeField] private NomadTownPainter _nomadTownPainter;
-
-            [Header("HUD")]
+            [Header("Interface")]
             [SerializeField] private GameObject _hudCanvas;
             private BuilderHud _hud;
 
-            private Dictionary<PainterMode, BuilderPainter> _painters;
-            private BuilderPainter _activePainter;
+            private Dictionary<ModeType, Mode> _modes;
+            private Mode _activeMode;
 
+            [Header("Output")]
             [SerializeField] private Island _islandPrefab;
             private Island _island;
 
@@ -46,65 +47,65 @@ namespace Island
                 _island = Instantiate(_islandPrefab);
                 _island.Init();
 
-                _painters = new Dictionary<PainterMode, BuilderPainter>
+                _modes = new Dictionary<ModeType, Mode>
         {
-            { PainterMode.Island, _islandPainter },
-            { PainterMode.NomadTown, _nomadTownPainter },
+            { ModeType.Island, _islandMode },
+            { ModeType.NomadTown, _nomadTownMode },
+            { ModeType.Temple, _templeMode },
         };
 
-                foreach (BuilderPainter pt in _painters.Values)
+                foreach (Mode mode in _modes.Values)
                 {
-                    pt.Init(_island);
-                    pt.Disable();
+                    mode.Init(_island, _hudCanvas);
                 }
 
             }
 
-            private void DisablePainter(BuilderPainter painter)
+            private void DisableMode(Mode mode)
             {
-                painter.Disable();
-                _activePainter = null;
+                mode.Disable();
+                _activeMode = null;
                 CameraManager.Instance.UnfreezeZoom();
             }
 
-            private void EnablePainter(BuilderPainter painter)
+            private void EnableMode(Mode mode)
             {
-                painter.Enable();
-                _activePainter = painter;
+                mode.Enable();
+                _activeMode = mode;
                 CameraManager.Instance.FreezeZoom();
             }
 
-            public void UpdatePainterMode(PainterMode mode)
+            public void UpdatePainterMode(ModeType type)
             {
-                if (_painters.TryGetValue(mode, out BuilderPainter painter))
+                if (_modes.TryGetValue(type, out Mode mode))
                 {
 
                     // Switch mode while one is already active => deactivate active first
-                    if (_activePainter && painter != _activePainter)
+                    if (_activeMode && mode != _activeMode)
                     {
-                        DisablePainter(_activePainter);
+                        DisableMode(_activeMode);
                     }
 
 
-                    if (painter.enabled)
+                    if (mode.Active())
                     {
-                        DisablePainter(painter);
+                        DisableMode(mode);
                     }
                     else
                     {
-                        EnablePainter(painter);
+                        EnableMode(mode);
                     }
 
 
                 }
                 else
                 {
-                    _activePainter = null;
+                    _activeMode = null;
                     CameraManager.Instance.UnfreezeZoom();
                 }
 
                 // Update UI Buttons State
-                _hud.UpdatePainterButtons(mode);
+                _hud.UpdateModeButtons(type);
 
             }
 
