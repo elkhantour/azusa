@@ -41,7 +41,7 @@ namespace Island
             {
 
                 _instance = this;
-                _hudCanvas = Instantiate(_hudCanvas);
+                _hudCanvas = Instantiate(_hudCanvas, transform);
                 _hud = _hudCanvas.GetComponent<BuilderHud>();
 
                 _island = Instantiate(_islandPrefab);

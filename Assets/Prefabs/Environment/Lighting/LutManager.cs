@@ -159,6 +159,7 @@ public class LutManager : MonoBehaviour
         if (targetVolume == null)
         {
             GameObject volumeGO = new GameObject("LutManager_GlobalVolume");
+	    volumeGO.transform.SetParent(transform);
             targetVolume = volumeGO.AddComponent<Volume>();
             targetVolume.isGlobal = true;
             targetVolume.priority = 1;
