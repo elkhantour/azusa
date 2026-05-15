@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class RadioGroup : MonoBehaviour
 {
     [SerializeField]
     private List<RadioButton> _buttons = new();
+    public event Action<RadioButton, RadioButton> OnSelectionChanged;
 
     [SerializeField]
     private bool _allowDeselect = true;
@@ -31,7 +33,7 @@ public class RadioGroup : MonoBehaviour
     }
 
     public void Select(RadioButton target)
-    {	
+    {
         // Clicked active button
         if (_activeButton == target)
         {
@@ -41,6 +43,7 @@ public class RadioGroup : MonoBehaviour
                 _activeButton = null;
             }
 
+            OnSelectionChanged?.Invoke(target, _activeButton);
             return;
         }
 
@@ -53,5 +56,7 @@ public class RadioGroup : MonoBehaviour
         // Enable new
         _activeButton = target;
         _activeButton.SetSelected(true);
+
+        OnSelectionChanged?.Invoke(target, _activeButton);
     }
 }
