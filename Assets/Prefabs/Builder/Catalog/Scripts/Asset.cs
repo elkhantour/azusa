@@ -13,7 +13,7 @@ namespace Island
         public class Asset
         {
             [SerializeField] public string Name;
-            [SerializeField] public Image Image;
+            [SerializeField] public Sprite Image;
             [SerializeField] public GameObject Object;
 
 

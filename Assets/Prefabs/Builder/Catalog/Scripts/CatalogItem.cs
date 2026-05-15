@@ -14,9 +14,9 @@ namespace Island
         {
 
             [SerializeField] private string _name;
-            [SerializeField] private Image _visual;
+            [SerializeField] private Sprite _visual;
 
-            public void Init(string name, Image visual)
+            public void Init(string name, Sprite visual)
             {
                 _name = name;
                 _visual = visual;
@@ -30,7 +30,7 @@ namespace Island
                 }
 
                 if(_visual != null){
-                    img = _visual;
+                    img.sprite = _visual;
                 }
             }
 

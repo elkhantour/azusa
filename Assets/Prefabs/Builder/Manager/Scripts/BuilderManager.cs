@@ -65,14 +65,12 @@ namespace Island
             {
                 mode.Disable();
                 _activeMode = null;
-                CameraManager.Instance.UnfreezeZoom();
             }
 
             private void EnableMode(Mode mode)
             {
                 mode.Enable();
                 _activeMode = mode;
-                CameraManager.Instance.FreezeZoom();
             }
 
             public void UpdatePainterMode(ModeType type)
@@ -101,7 +99,6 @@ namespace Island
                 else
                 {
                     _activeMode = null;
-                    CameraManager.Instance.UnfreezeZoom();
                 }
 
                 // Update UI Buttons State

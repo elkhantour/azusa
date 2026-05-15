@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class RadioGroup : MonoBehaviour
 {
     [SerializeField]
-    private List<RadioButton> _buttons;
+    private List<RadioButton> _buttons = new();
 
     [SerializeField]
     private bool _allowDeselect = true;
@@ -31,7 +31,7 @@ public class RadioGroup : MonoBehaviour
     }
 
     public void Select(RadioButton target)
-    {
+    {	
         // Clicked active button
         if (_activeButton == target)
         {

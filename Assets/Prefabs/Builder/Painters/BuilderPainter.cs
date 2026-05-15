@@ -48,6 +48,7 @@ namespace Island
             {
                 enabled = true;
                 UpdateChunksVisibility();
+                CameraManager.Instance.FreezeZoom();
             }
 
             public void Disable()
@@ -55,6 +56,7 @@ namespace Island
                 enabled = false;
                 DeleteCurrentChunk();
                 UpdateChunksVisibility();
+                CameraManager.Instance.UnfreezeZoom();
             }
 
             protected float GetActiveChunkRadius()
@@ -215,7 +217,7 @@ namespace Island
             private void DeleteCurrentChunk()
             {
                 _spawnedChunks.Remove(_activeChunk);
-		// TODO handle circle mask removal
+                // TODO handle circle mask removal
                 Destroy(_activeChunk);
                 _activeChunk = null;
                 _isMovingExisting = false;

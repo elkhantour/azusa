@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CameraModeOrbit : CameraMode
 {
@@ -71,7 +72,8 @@ public class CameraModeOrbit : CameraMode
 
         float scrollWheel = Input.GetAxis("Mouse ScrollWheel");
 
-        if (!_freezeZoom)
+
+        if (!_freezeZoom && !EventSystem.current.IsPointerOverGameObject())
             ZoomCamera(scrollWheel);
 
         if (!_freezeOrbit)

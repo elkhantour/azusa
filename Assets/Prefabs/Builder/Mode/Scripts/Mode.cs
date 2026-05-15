@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 namespace Island
@@ -19,6 +20,7 @@ namespace Island
         {
 
             [SerializeField] protected BuilderPainter _painter;
+            [SerializeField] private Sprite _painterSprite;
             [SerializeField] private Catalog _catalog;
 
             protected Asset _activeAsset;
@@ -28,14 +30,21 @@ namespace Island
             {
 
                 _island = island;
+                _catalog.Init(canvas);
 
                 if (_painter)
                 {
                     _painter.Init(_island);
                     _painter.Disable();
+                    // color: 00548E
+                    _catalog.Prepend(new Asset
+                    {
+                        Name = "Brush",
+                        Image = _painterSprite,
+                    });
                 }
 
-                _catalog.Init(canvas);
+
                 Disable();
 
             }
