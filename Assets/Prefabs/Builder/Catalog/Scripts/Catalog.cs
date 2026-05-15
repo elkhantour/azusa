@@ -30,7 +30,7 @@ namespace Island
                 _panelInstance.transform.SetAsFirstSibling();
 
                 _content = _panelInstance.transform.Find("Viewport/Content")?.gameObject;
-                _radioGroup = gameObject.AddComponent<RadioGroup>();
+                _radioGroup = gameObject.GetComponent<RadioGroup>() ?? gameObject.AddComponent<RadioGroup>();
                 _radioGroup.OnSelectionChanged += OnAssetChange;
 
                 if (_content == null)
@@ -96,12 +96,15 @@ namespace Island
                 if (_activeAsset != null && active == null)
                 {
                     _activeAsset.OnInactive.Invoke(_activeAsset);
+                    _activeAsset = null;
                 }
 
                 if (active != null && _buttonAssetMap.TryGetValue(active, out Asset asset))
                 {
-                   asset.OnActive.Invoke(asset);
+                    asset.OnActive.Invoke(asset);
+                    _activeAsset = asset;
                 }
+
 
             }
 
@@ -126,6 +129,11 @@ namespace Island
             public void Add(Asset asset)
             {
                 _items.Add(SpawnItemFromAsset(asset));
+            }
+
+            void OnDestroy()
+            {
+                Destroy(_radioGroup);
             }
         }
 
