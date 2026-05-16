@@ -69,26 +69,22 @@ namespace Island
 
             public void OnAssetActive(Asset asset)
             {
-                Debug.Log($"Enable tool {asset.Name}");
                 // TODO update active gameobject
                 _assetPainter.Enable();
             }
 
             public void OnAssetInactive(Asset asset)
             {
-                Debug.Log($"Disable tool {asset.Name}");
                 _assetPainter.Disable();
             }
 
             public void OnCustomPainterActive(Asset asset)
             {
-                Debug.Log($"Enable tool {asset.Name}");
                 _customPainter.Enable();
             }
 
             public void OnCustomPainterInactive(Asset asset)
             {
-                Debug.Log($"Disable tool {asset.Name}");
                 _customPainter.Disable();
             }
 

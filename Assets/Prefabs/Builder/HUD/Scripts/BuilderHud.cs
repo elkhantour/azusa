@@ -16,8 +16,11 @@ namespace Island
             public class BuilderHud : MonoBehaviour
             {
 
+                [SerializeField] private GameModeManager _gameModeManager;
+
                 [Header("Painter Modes Triggers")]
                 [SerializeField] private List<BuildModeButton> _buildModeButtons = new();
+
                 private BuildModeButton _activeButton;
 
                 public void UpdateModeButtons(ModeType mode)
@@ -32,6 +35,16 @@ namespace Island
                     targetButton.SetState(!targetButton.Active);
                     _activeButton = targetButton.Active ? targetButton : null;
 
+                }
+
+                public void Discard()
+                {
+                    _gameModeManager.SetMode(GameMode.Play);
+                }
+
+                public void Confirm()
+                {
+                    _gameModeManager.SetMode(GameMode.Play);
                 }
 
             }

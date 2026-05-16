@@ -221,7 +221,7 @@ namespace Island
 
                 for (int i = 0; i < count; i++)
                 {
-                    GameObject chunk = Instantiate(chunkPrefab);
+                    GameObject chunk = Instantiate(chunkPrefab, transform);
 
                     // Random radius for this chunk
                     float radius = UnityEngine.Random.Range(minRadius, maxRadius);

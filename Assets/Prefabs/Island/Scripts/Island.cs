@@ -29,6 +29,8 @@ namespace Island
         [System.NonSerialized] public GameObject Ground;
         [System.NonSerialized] public GameObject Root;
 
+        private BoxCollider _groundCollider;
+
         private void GenerateNomadTowns()
         {
             nomadTownMask = new List<RadialMask>();
@@ -87,9 +89,17 @@ namespace Island
         public void Init()
         {
             Parent = gameObject;
+
             Ground = CreateGameObject("Ground", groundMaterial, Parent, "Ground");
+
+            if (!Ground.TryGetComponent(out _groundCollider))
+            {
+                _groundCollider = Ground.AddComponent<BoxCollider>();
+            }
+
             Root = CreateGameObject("Root", rootMaterial, Parent);
         }
+
 
         public void BakeTexture()
         {
@@ -106,7 +116,11 @@ namespace Island
 
         public void GenerateFlora()
         {
+            //TODO: temporarilly desactivate the box collider so flora gets spawned properly
+            // But maybe need to find a cleaner way to do it (layer etc..)
+            _groundCollider.enabled = false;
             GenerateFlora(nomadTownMask);
+            _groundCollider.enabled = true;
         }
 
         public Mesh GetGroundMesh()
@@ -122,6 +136,10 @@ namespace Island
         public void SetGroundMesh(Mesh mesh)
         {
             Ground.GetComponent<MeshFilter>().mesh = mesh;
+
+            MeshRenderer rd = Ground.GetComponent<MeshRenderer>();
+            _groundCollider.size = rd.bounds.size;
+            _groundCollider.center = rd.bounds.center - transform.position;
         }
 
         public void SetRootMesh(Mesh mesh)

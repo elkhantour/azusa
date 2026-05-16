@@ -27,8 +27,7 @@ namespace Island
             [SerializeField] private Mode _templeMode;
 
             [Header("Interface")]
-            [SerializeField] private GameObject _hudCanvas;
-            private BuilderHud _hud;
+            [SerializeField] private BuilderHud _hud;
 
             private Dictionary<ModeType, Mode> _modes;
             private Mode _activeMode;
@@ -41,8 +40,6 @@ namespace Island
             {
 
                 _instance = this;
-                _hudCanvas = Instantiate(_hudCanvas, transform);
-                _hud = _hudCanvas.GetComponent<BuilderHud>();
 
                 _island = Instantiate(_islandPrefab);
                 _island.Init();
@@ -53,12 +50,12 @@ namespace Island
             { ModeType.NomadTown, _nomadTownMode },
             { ModeType.Temple, _templeMode },
         };
-
+		
                 foreach (Mode mode in _modes.Values)
                 {
-                    mode.Init(_island, _hudCanvas);
+                    mode.Init(_island, _hud.gameObject);
                 }
-
+		
             }
 
             private void DisableMode(Mode mode)
@@ -105,6 +102,7 @@ namespace Island
                 _hud.UpdateModeButtons(type);
 
             }
+
 
 
         }

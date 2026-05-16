@@ -19,6 +19,8 @@ namespace Island
         public class BuilderPainter : MonoBehaviour
         {
 
+            [SerializeField] protected CameraManager _cameraManager;
+
             [Header("Builder")]
             [SerializeField] protected GameObject chunkPrefab;
             [SerializeField] protected int maxChunks = 10;
@@ -48,7 +50,7 @@ namespace Island
             {
                 enabled = true;
                 UpdateChunksVisibility();
-                CameraManager.Instance.FreezeZoom();
+                _cameraManager.FreezeZoom();
             }
 
             public void Disable()
@@ -56,7 +58,7 @@ namespace Island
                 enabled = false;
                 DeleteCurrentChunk();
                 UpdateChunksVisibility();
-                CameraManager.Instance.UnfreezeZoom();
+                _cameraManager.UnfreezeZoom();
             }
 
             protected float GetActiveChunkRadius()
@@ -152,7 +154,7 @@ namespace Island
 
             private void SpawnNewChunk()
             {
-                _activeChunk = Instantiate(chunkPrefab);
+                _activeChunk = Instantiate(chunkPrefab, transform);
                 _isPlacingNew = true;
                 _activeChunk.GetComponent<ChunkHelper>().SetActive(true);
             }

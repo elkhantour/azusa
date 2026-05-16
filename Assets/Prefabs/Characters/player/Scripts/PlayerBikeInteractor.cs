@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CharacterBikeInteractor : MonoBehaviour
+public class PlayerBikeInteractor : MonoBehaviour
 {
     public float interactionRange = 2f;
     public KeyCode rideKey = KeyCode.E;
@@ -9,14 +9,14 @@ public class CharacterBikeInteractor : MonoBehaviour
     private bool _isRiding = false;
 
     // References to your existing scripts
-    private CharacterMovement _movementScript;
-    private CharacterController _controller;
+    private PlayerMovement _movementScript;
+    private PlayerAnimationController _controller;
     private Animator _animator;
 
     void Start()
     {
-        _movementScript = GetComponent<CharacterMovement>();
-        _controller = GetComponent<CharacterController>();
+        _movementScript = GetComponent<PlayerMovement>();
+        _controller = GetComponent<PlayerAnimationController>();
         _animator = GetComponent<Animator>();
     }
 

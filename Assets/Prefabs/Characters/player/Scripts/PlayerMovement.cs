@@ -1,10 +1,10 @@
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class CharacterMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     private CharacterController controller;
-    private CharacterAnimationController animationController;
+    private PlayerAnimationController animationController;
 
     [Header("Speeds")]
     public float walkSpeed = 2f;
@@ -21,7 +21,7 @@ public class CharacterMovement : MonoBehaviour
     private void Start()
     {
         controller = GetComponent<CharacterController>();
-        animationController = GetComponent<CharacterAnimationController>();
+        animationController = GetComponent<PlayerAnimationController>();
     }
 
     private void Update()
