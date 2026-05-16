@@ -22,7 +22,7 @@ namespace Island
             private RadioGroup _radioGroup;
             private Dictionary<RadioButton, Asset> _buttonAssetMap = new Dictionary<RadioButton, Asset>();
             private Asset _activeAsset;
-            private List<GameObject> _items;
+            private List<GameObject> _items = new();
 
             public void Init(GameObject canvas)
             {
