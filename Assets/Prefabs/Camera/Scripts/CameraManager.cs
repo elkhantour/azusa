@@ -21,6 +21,8 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    [SerializeField] private GameModeManager _gameModeManager;
+
     [Header("Core")]
     [SerializeField] private CameraModeType defaultMode;
 
@@ -34,6 +36,10 @@ public class CameraManager : MonoBehaviour
     {
         _instance = this;
         SetMode(defaultMode);
+
+        _gameModeManager.OnModeChanged += OnGameModeChanged;
+        OnGameModeChanged(_gameModeManager.CurrentMode);
+
     }
 
     public void SetMode(CameraModeType mode)
@@ -47,15 +53,17 @@ public class CameraManager : MonoBehaviour
         };
     }
 
-    public void FreezeZoom(){
-	_orbitMode.FreezeZoom();
+    public void FreezeZoom()
+    {
+        _orbitMode.FreezeZoom();
     }
 
-    public void UnfreezeZoom(){
-	_orbitMode.UnfreezeZoom();
+    public void UnfreezeZoom()
+    {
+        _orbitMode.UnfreezeZoom();
     }
 
-    
+
     private void LateUpdate()
     {
         currentMode?.Tick();
@@ -64,6 +72,28 @@ public class CameraManager : MonoBehaviour
     public CameraState GetState()
     {
         return currentMode.state;
+    }
+
+    public void OnGameModeChanged(GameMode mode)
+    {
+
+        switch (mode)
+        {
+
+            case GameMode.Play:
+                SetMode(CameraModeType.TopDown);
+                break;
+
+
+            case GameMode.Build:
+                SetMode(CameraModeType.Orbit);
+                break;
+
+            default:
+                break;
+
+        }
+
     }
 
 }
