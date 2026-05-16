@@ -59,4 +59,13 @@ public class RadioGroup : MonoBehaviour
 
         OnSelectionChanged?.Invoke(target, _activeButton);
     }
+
+    public void DisableActive()
+    {
+        if (_activeButton != null)
+        {
+            _activeButton.SetSelected(false);
+            _activeButton = null;
+        }
+    }
 }

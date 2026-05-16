@@ -115,6 +115,15 @@ namespace Island
 
             public void Disable()
             {
+
+                if (_activeAsset != null)
+                {
+                    _activeAsset.OnInactive.Invoke(_activeAsset);
+                    _activeAsset = null;
+                }
+		
+                _radioGroup.DisableActive();
+		
                 _panelInstance.SetActive(false);
             }
 
