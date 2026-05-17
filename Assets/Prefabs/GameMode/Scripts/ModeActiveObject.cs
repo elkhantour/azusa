@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ModeActiveObject : MonoBehaviour
 {
     [SerializeField] private GameModeManager _modeManager;
-    [SerializeField] private GameMode _mode;
+    [SerializeField] private List<GameMode> _activeModes;
 
     private void Awake()
     {
@@ -13,6 +14,6 @@ public class ModeActiveObject : MonoBehaviour
 
     private void OnModeChanged(GameMode mode)
     {
-        gameObject.SetActive(mode == _mode);
+        gameObject.SetActive(_activeModes.Contains(mode));
     }
 }

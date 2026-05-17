@@ -7,6 +7,7 @@ public enum GameMode
     Play,
     Build,
     Dialog,
+    CharacterEditor,
     Pause,
 }
 

@@ -4,6 +4,7 @@ public enum CameraModeType
 {
     Orbit,
     TopDown,
+    CharacterEditor,
     Locked,
 }
 
@@ -28,6 +29,7 @@ public class CameraManager : MonoBehaviour
 
     [SerializeField] private CameraModeOrbit _orbitMode;
     [SerializeField] private CameraModeTopDown _topDownMode;
+    [SerializeField] private CameraModeCharacterEditor _characterEditorMode;
     [SerializeField] private CameraModeLocked _lockedMode;
 
     private CameraMode currentMode;
@@ -48,6 +50,7 @@ public class CameraManager : MonoBehaviour
         {
             CameraModeType.Orbit => _orbitMode,
             CameraModeType.TopDown => _topDownMode,
+            CameraModeType.CharacterEditor => _characterEditorMode,
             CameraModeType.Locked => _lockedMode,
             _ => null
         };
@@ -87,6 +90,10 @@ public class CameraManager : MonoBehaviour
 
             case GameMode.Build:
                 SetMode(CameraModeType.Orbit);
+                break;
+
+            case GameMode.CharacterEditor:
+                SetMode(CameraModeType.CharacterEditor);
                 break;
 
             default:
