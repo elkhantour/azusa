@@ -1,12 +1,12 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class RadioButton : MonoBehaviour
 {
-    [SerializeField] private Image _background;
-
-    [SerializeField] private Sprite _normalSprite;
-    [SerializeField] private Sprite _selectedSprite;
+    // Plug-in components (e.g. RadioButtonSpriteSwap) register here via AddListener.
+    public readonly List<UnityAction> OnSelected   = new();
+    public readonly List<UnityAction> OnDeselected = new();
 
     private RadioGroup _group;
 
@@ -20,10 +20,11 @@ public class RadioButton : MonoBehaviour
         _group.Select(this);
     }
 
+    /// <summary>Called by RadioGroup — invokes all registered selected/deselected callbacks.</summary>
     public void SetSelected(bool selected)
     {
-        _background.sprite = selected
-            ? _selectedSprite
-            : _normalSprite;
+        List<UnityAction> callbacks = selected ? OnSelected : OnDeselected;
+        foreach (UnityAction callback in callbacks)
+            callback?.Invoke();
     }
 }

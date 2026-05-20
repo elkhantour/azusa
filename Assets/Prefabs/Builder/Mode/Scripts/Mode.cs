@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Catalog;
 
 
 namespace Island
@@ -19,74 +20,19 @@ namespace Island
         public class Mode : MonoBehaviour
         {
 
-            [SerializeField] protected AssetPainter _assetPainter;
-            [SerializeField] protected BuilderPainter _customPainter;
-            [SerializeField] private Sprite _customPainterSprite;
-            [SerializeField] private Catalog _catalog;
+            [SerializeField] private CatalogController _catalog;
 
-            protected Asset _activeAsset;
             protected Island _island;
 
             public void Init(Island island, GameObject canvas)
             {
-
                 _island = island;
-
-                _catalog.BatchOnActiveCallback(OnAssetActive);
-                _catalog.BatchOnInactiveCallback(OnAssetInactive);
                 _catalog.Init(canvas);
-
-                if (_assetPainter)
-                {
-                    _assetPainter.Init(_island);
-                    _assetPainter.Disable();
-                }
-
-                if (_customPainter)
-                {
-                    _customPainter.Init(_island);
-                    _customPainter.Disable();
-
-                    // TODO update sprite color to: 00548E
-                    // Create a new custom asset specifically
-                    // for the custom painter and prepend it to the existing catalog
-                    Asset asset = new Asset
-                    {
-                        Name = "Brush",
-                        Image = _customPainterSprite
-                    };
-
-                    asset.OnActive.AddListener(OnCustomPainterActive);
-                    asset.OnInactive.AddListener(OnCustomPainterInactive);
-
-                    _catalog.Prepend(asset);
-                }
-
-
+		_catalog.PanelInstance.transform.SetAsFirstSibling();
                 Disable();
 
             }
 
-            public void OnAssetActive(Asset asset)
-            {
-                // TODO update active gameobject
-                _assetPainter.Enable();
-            }
-
-            public void OnAssetInactive(Asset asset)
-            {
-                _assetPainter.Disable();
-            }
-
-            public void OnCustomPainterActive(Asset asset)
-            {
-                _customPainter.Enable();
-            }
-
-            public void OnCustomPainterInactive(Asset asset)
-            {
-                _customPainter.Disable();
-            }
 
             public bool Active()
             {
