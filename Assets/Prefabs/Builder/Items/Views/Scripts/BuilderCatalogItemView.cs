@@ -7,7 +7,7 @@ namespace Island.Builder
     public class BuilderCatalogItemView : ItemView
     {
 
-// used to retrieve the active island
+	// used to retrieve the active island
 	[SerializeField] private BuilderManager _builderManager; 
         [SerializeField] private BuilderPainter _painter;
         [SerializeField] private Sprite _defaultBackground;

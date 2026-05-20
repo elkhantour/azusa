@@ -6,6 +6,8 @@ public class RadioGroup : MonoBehaviour
 {
     [SerializeField]
     private List<RadioButton> _buttons = new();
+    private readonly List<RadioButton> _runtimeButtons = new();
+
     public event Action<RadioButton, RadioButton> OnSelectionChanged;
 
     [SerializeField]
@@ -23,13 +25,14 @@ public class RadioGroup : MonoBehaviour
 
     public void Add(RadioButton button)
     {
-        _buttons.Add(button);
+        _runtimeButtons.Add(button);
         button.Init(this);
     }
 
     public void Remove(RadioButton button)
     {
         _buttons.Remove(button);
+        _runtimeButtons.Remove(button);
     }
 
     public void Select(RadioButton target)
@@ -68,4 +71,10 @@ public class RadioGroup : MonoBehaviour
             _activeButton = null;
         }
     }
+
+    private void OnDestroy()
+    {
+        _runtimeButtons.Clear();
+    }
+
 }
