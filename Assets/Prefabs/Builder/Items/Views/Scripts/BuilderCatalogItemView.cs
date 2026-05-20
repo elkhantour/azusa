@@ -1,10 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Catalog;
 
-namespace Catalog
+namespace Island.Builder
 {
     public class BuilderCatalogItemView : ItemView
     {
+
+// used to retrieve the active island
+	[SerializeField] private BuilderManager _builderManager; 
+        [SerializeField] private BuilderPainter _painter;
         [SerializeField] private Sprite _defaultBackground;
         [SerializeField] private Sprite _activeBackground;
 
@@ -14,6 +19,13 @@ namespace Catalog
         public override void Init(Item item)
         {
             base.Init(item);
+
+	    if(_builderManager == null || _builderManager.Island == null){
+		Debug.LogWarning("BuilderCatalogItemView: Manager or Island not initialized, unable to initialize Painter");
+                return;
+	    }
+	    
+	    _painter.Init(_builderManager.Island);
 
             _visualImage = gameObject.transform.Find("Visual")?.GetComponent<Image>();
             if (_visualImage == null)
@@ -36,12 +48,17 @@ namespace Catalog
         {
             if (_backgroundImage != null)
                 _backgroundImage.sprite = _activeBackground;
+
+            _painter.Enable();
         }
 
         public override void OnDeselect()
         {
             if (_backgroundImage != null)
                 _backgroundImage.sprite = _defaultBackground;
+
+            _painter.Disable();
         }
+
     }
 }

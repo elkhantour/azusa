@@ -34,15 +34,15 @@ namespace Island
 
             [Header("Output")]
             [SerializeField] private Island _islandPrefab;
-            private Island _island;
+            public Island Island { get; private set; }
 
             void Awake()
             {
 
                 _instance = this;
 
-                _island = Instantiate(_islandPrefab);
-                _island.Init();
+                Island = Instantiate(_islandPrefab);
+                Island.Init();
 
                 _modes = new Dictionary<ModeType, Mode>
         {
@@ -50,12 +50,12 @@ namespace Island
             { ModeType.NomadTown, _nomadTownMode },
             { ModeType.Temple, _templeMode },
         };
-		
+
                 foreach (Mode mode in _modes.Values)
                 {
-                    mode.Init(_island, _hud.gameObject);
+                    mode.Init(Island, _hud.gameObject);
                 }
-		
+
             }
 
             private void DisableMode(Mode mode)

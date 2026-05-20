@@ -9,7 +9,7 @@ namespace Catalog
         [SerializeField] private GameObject _panelPrefab;
 
         [Header("Entries")]
-        [SerializeField] private List<CatalogEntry> _entries;
+        [SerializeField] public List<CatalogEntry> Entries;
 
         public GameObject PanelInstance { get; private set; }
         private Transform _content;
@@ -41,7 +41,7 @@ namespace Catalog
 
         private void BuildCatalog()
         {
-            foreach (var entry in _entries)
+            foreach (var entry in Entries)
             {
                 if (entry.Item == null || entry.ViewPrefab == null)
                 {
