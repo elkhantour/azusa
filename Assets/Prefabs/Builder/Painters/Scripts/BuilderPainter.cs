@@ -28,6 +28,7 @@ namespace Island
             [SerializeField] protected float maxRadius = 10f;
             [SerializeField] protected float scrollSensitivity = 1f;
             [SerializeField] protected float radiusPadding = 0f;
+            [SerializeField] protected GameObject _root;
 
             [Header("Controls")]
             [SerializeField] private KeyCode deleteKey = KeyCode.Delete;
@@ -154,7 +155,7 @@ namespace Island
 
             private void SpawnNewChunk()
             {
-                _activeChunk = Instantiate(chunkPrefab, transform);
+                _activeChunk = Instantiate(chunkPrefab, _root?.transform);
                 _isPlacingNew = true;
                 _activeChunk.GetComponent<ChunkHelper>().SetActive(true);
             }

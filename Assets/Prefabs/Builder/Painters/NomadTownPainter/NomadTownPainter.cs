@@ -17,7 +17,7 @@ namespace Island
             {
 
                 float radius = GetActiveChunkRadius();
-
+		
                 // If town already exists, detroy and respawn it
                 if (_spawnedTowns.TryGetValue(_activeChunk, out GameObject town))
                 {

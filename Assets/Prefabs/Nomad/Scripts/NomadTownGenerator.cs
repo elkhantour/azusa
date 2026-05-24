@@ -32,7 +32,6 @@ public class NomadTownGenerator : MonoBehaviour
     // this one in the method argument
     public void GenerateTown(GameObject parent = null, float radiusOverride = RADIUS_NO_OVERRIDE)
     {
-
         //ClearTown();
         SpawnCenter(parent);
 
