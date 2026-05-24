@@ -12,11 +12,16 @@ namespace CharacterEditor
         [SerializeField] private PlayerBody _playerBody;
         [SerializeField] private PlayerEquipment _playerEquipment;
 
+        // DEBUG 
+        [SerializeField] private WearableItem _hair;
 
         void Awake()
         {
             _playerBody.SetAllVisible(true);
             _playerEquipment.UnequipAll();
+
+	    // DEBUG
+	    _playerEquipment.Equip(_hair);
         }
 
     }

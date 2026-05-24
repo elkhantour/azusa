@@ -74,7 +74,7 @@ public class NomadTownGenerator : MonoBehaviour
 
                 float x = Mathf.Cos(distortedAngle) * distortedRadius;
                 float z = Mathf.Sin(distortedAngle) * distortedRadius;
-                Vector3 candidatePos = transform.position + new Vector3(x, 0, z);
+                Vector3 candidatePos = parent.transform.position + new Vector3(x, 0, z);
 
                 if (IsSpaceFree(candidatePos, spawnedPositions, config.MinSeparation))
                 {
@@ -88,13 +88,14 @@ public class NomadTownGenerator : MonoBehaviour
             {
                 GameObject prefab = config.Prefabs[Random.Range(0, config.Prefabs.Length)];
 
-                // Rotation: Always face the center (transform.position)
-                Vector3 directionToCenter = (transform.position - finalPos).normalized;
-                Quaternion rotation = Quaternion.LookRotation(directionToCenter);
+                Quaternion rotation = Quaternion.identity;
+                // TODO Rotation: Always face the center (transform.position)
+                // Vector3 directionToCenter = (transform.position - finalPos).normalized;
+                // Quaternion rotation = Quaternion.LookRotation(directionToCenter);
 
                 Instantiate(prefab, finalPos, rotation, parent != null ? parent.transform : transform);
-                spawnedPositions.Add(finalPos);
             }
+
         }
     }
 
